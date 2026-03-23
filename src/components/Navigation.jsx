@@ -5,10 +5,10 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'theory', label: 'Theory & Concepts', icon: BookOpen },
     { id: 'pi', label: 'Estimating Pi', icon: CircleDot },
-    { id: 'stock', label: 'Stock Price Prediction', icon: TrendingUp },
     { id: 'integration', label: 'Monte Carlo Integration', icon: Calculator },
     { id: 'montyhall', label: 'Monty Hall Problem', icon: Gamepad2 },
     { id: 'randomwalk', label: '2D Random Walk', icon: Map },
+    { id: 'stock', label: 'Stock Price Prediction', icon: TrendingUp },
     { id: 'projectmgmt', label: 'Project Scheduling', icon: Calendar },
     { id: 'manufacturing', label: 'Manufacturing Quality', icon: Factory },
   ];

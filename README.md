@@ -21,24 +21,25 @@ The **Monte Carlo Lab** allows users to interactively adjust parameters for vari
 
 The classic geometric Monte Carlo approach. By "throwing darts" into a square bounding a circle, we use the ratio of hits to estimate $\pi$ using the area formula: $A = \pi r^2$.
 
-### 2. 📈 Stock Price Prediction
+### 2. 📐 Monte Carlo Integration
+
+Calculates definite integrals where analytical solutions might be difficult. The lab visualizes the area under the curve for functions like $\sin(x)$ from $0$ to $\pi$, empirically proving the Fundamental Theorem of Calculus.
+
+### 3. 🚪 Monty Hall Problem
+
+A counter-intuitive simulation of the famous game show paradox. Observe how the "Switch" strategy consistently outperforms the "Stay" strategy over thousands of trials.
+
+### 4. 🗺️ 2D Random Walk (Brownian Motion)
+
+Visualizes the drunkard's walk or particle drift. Adjust steps and the number of walkers to see how the displacement from the origin follows the $\sqrt{N}$ rule.
+
+### 5. 📈 Stock Price Prediction
 
 Simulates future stock price paths using **Geometric Brownian Motion (GBM)**.
 
 - **Equation**: $dS_t = \mu S_t dt + \sigma S_t dW_t$
 - Users can adjust initial price, drift ($\mu$), and volatility ($\sigma$) to see a "fan" of potential future trajectories.
 
-### 3. 📐 Monte Carlo Integration
-
-Calculates definite integrals where analytical solutions might be difficult. The lab visualizes the area under the curve for functions like $\sin(x)$ from $0$ to $\pi$, empirically proving the Fundamental Theorem of Calculus.
-
-### 4. 🚪 Monty Hall Problem
-
-A counter-intuitive simulation of the famous game show paradox. Observe how the "Switch" strategy consistently outperforms the "Stay" strategy over thousands of trials.
-
-### 5. 🗺️ 2D Random Walk (Brownian Motion)
-
-Visualizes the drunkard's walk or particle drift. Adjust steps and the number of walkers to see how the displacement from the origin follows the $\sqrt{N}$ rule.
 
 ### 6. 📅 Project Scheduling & Risk
 
