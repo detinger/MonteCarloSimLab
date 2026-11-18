@@ -37,7 +37,8 @@ function selector(mode) {
   return base===mode ? id || '' : ''
 }
 function Links({lesson}) {
-  return <div className="learn-links">{lesson.labs.map(id=><a key={id} href={'#/'+id}>{labName(id)} <ArrowRight size={13}/></a>)}</div>
+  const target=id=>id==='builder'&&lesson.builder ? ['#/builder/template/'+lesson.builder.template+'/'+lesson.builder.node, lesson.builder.label] : ['#/'+id, labName(id)]
+  return <div className="learn-links">{lesson.labs.map(id=>{const [href,text]=target(id);return <a key={id} href={href}>{text} <ArrowRight size={13}/></a>})}</div>
 }
 function Knowledge({entry,index,record,save}) {
   const q=checks[index], [choice, setChoice]=useState(record?.choice ?? '')

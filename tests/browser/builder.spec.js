@@ -64,3 +64,18 @@ test('Builder threshold controls include or exclude ties in a worker run',async(
     await expect(app.getByText(hits+' events observed',{exact:true})).toBeVisible()
   }
 })
+
+test('lesson links open a fresh Builder template with the relevant node selected',async({page})=>{
+  await page.goto('/#/lessons/L11')
+  await page.getByRole('link',{name:'Inspect the budget threshold in Builder'}).click()
+  const app=page.locator('.builder')
+  await expect(app.getByText('Opened a new copy of the Project budget template.')).toBeVisible()
+  await expect(app.locator('.bd-pad h3')).toHaveText('Threshold event')
+  await expect(page).toHaveURL(/#\/builder$/)
+  await page.reload()
+  await expect(app.getByRole('button',{name:'Run simulation',exact:true})).toBeEnabled()
+  await expect(app.getByText(/Opened a new copy/)).toHaveCount(0)
+  await page.goto('/#/builder/template/rare/failure')
+  await expect(app.locator('.bd-pad h3')).toHaveText('Equipment fails')
+  await expect(app.getByRole('heading',{name:'Rare equipment loss'})).toBeVisible()
+})

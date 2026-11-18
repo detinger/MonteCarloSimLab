@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open **Simulation Lab** to choose a domain experiment, or **Simulation Builder** to define inputs, an output formula and a decision threshold. The default budget model is ready to run. The **Analysis** and **Compare** views can use a saved Builder project. **Distribution Studio** explores 16 input families with repeatable draws and theoretical bin probabilities.
+Open **Simulation Lab** to choose a domain experiment, or **Simulation Builder** to define inputs, an output formula and a decision threshold. The default budget model is ready to run. The **Analysis** and **Compare** views can use a saved Builder project. **Distribution Studio** explores 16 input families with repeatable draws and theoretical bin probabilities. A link such as `#/builder/template/budget/event` opens a new copy of a Builder template (`budget`, `revenue`, `rare`) with that node selected; the Builder lessons use these links.
 
 ## Experiments
 

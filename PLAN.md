@@ -765,7 +765,7 @@ Add a short `docs/deployment/netlify.md` and `docs/deployment/railway.md` with e
 - [x] Publish precisely 12 lessons and 12 graded challenges with versioned manifests, rubric and persistence.
 - [x] Implement compare: duplicate baseline, modify assumptions, run and show differences/uncertainty clearly.
 - [x] Add Builder template library for project budget, product revenue and rare-event education; keep templates out of 12 catalog count.
-- [ ] Add deep links among each lesson, example, challenge and relevant Builder node/metric.
+- [x] Add deep links among each lesson, example, challenge and relevant Builder node/metric.
 
 **Exit:** 12/12/12 manifest assertions pass; no challenge is graded on a single lucky run; complete teaching progression.
 
@@ -808,7 +808,7 @@ These are not substitutes for completing P1–P4. Avoid sneaking an experimental
 ### Functional
 
 - [x] Original 7 simulations preserved, correctly labeled and scientifically audited.
-- [ ] Exactly **12 examples, 12 lessons, 12 challenges** with full versioned fixtures and crosslinks.
+- [x] Exactly **12 examples, 12 lessons, 12 challenges** with full versioned fixtures and crosslinks.
 - [x] Full visual **Simulation Builder** is discoverable as the main workspace, with question wizard and blank canvas.
 - [ ] Node editor and keyboard/table editor agree; valid DAG, typed formulas, distributions, units, decision metric and threshold.
 - [x] Save/open/duplicate/import/export complete Builder and example project with no semantic loss.

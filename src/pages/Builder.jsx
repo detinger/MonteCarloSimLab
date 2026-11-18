@@ -4,7 +4,7 @@ import { CheckCheck, Copy, Download, FolderOpen, Pause, Play, Plus, Redo2, Save,
 import { ENGINE_VERSION } from '../engine/index.js'
 import { startRun } from '../engine/client.js'
 import { notebook, pythonScript, rScript } from '../engine/export.js'
-import { checkProject, checkRun, compile, createProject, download, families, issuesFor, loadProjects, newInput, newRelation, saveProject } from './builder/project.js'
+import { checkProject, checkRun, compile, createProject, download, families, issuesFor, loadProjects, newInput, newRelation, parseBuilderLink, saveProject, template } from './builder/project.js'
 import {downloadRunBundle} from '../components/runBundle.js'
 import {convergenceSvg,traceCsv} from './builder/chart.js'
 import ModelGraph from './builder/ModelGraph.jsx'
@@ -104,6 +104,31 @@ export default function Builder() {
     }
     window.addEventListener('mc-builder-open',open)
     return ()=>{active=false;window.removeEventListener('mc-builder-open',open)}
+  },[ready,working,project,run,save,load])
+  useEffect(() => {
+    if (!ready) return
+    let active=true
+    const follow=async()=>{
+      const link=parseBuilderLink(location.hash.slice(1)||location.pathname)
+      if(!link) return
+      // Collapse the link so a reload does not open another template copy.
+      window.history.replaceState(window.history.state,'',location.pathname+location.search+'#/builder')
+      if(link.template) {
+        if(working) {setMessage('Finish or cancel the active run before opening another project.');return}
+        try {
+          await save(project,run)
+          if(!active) return
+          const draft=template(link.template)
+          load({project:draft,run:null})
+          setMessage('Opened a new copy of the '+draft.title+' template.')
+        } catch(error) {if(active)setMessage(error.message);return}
+      }
+      const known=['formula','event','metric','question',...project.inputs.map(v=>v.name),...(project.relations||[]).map(v=>v.name)]
+      if(link.node && (link.template || known.includes(link.node))) select(link.node)
+    }
+    follow()
+    window.addEventListener('hashchange',follow)
+    return ()=>{active=false;window.removeEventListener('hashchange',follow)}
   },[ready,working,project,run,save,load])
   const edit=useCallback(patch=>{
     setHistory(h => ({past:[...h.past.slice(-69),project],future:[]}))

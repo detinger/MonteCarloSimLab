@@ -36,6 +36,24 @@ export function template(id) {
     assumptions:'One mission has at most one failure. Severity and the failure indicator are independent. These parameters are illustrative.'}
 }
 
+export const templateIds = ['budget','revenue','rare']
+const fixedNodes = ['formula','event','metric','question']
+
+// Lesson deep links: builder/template/<id>[/<node>] opens a fresh template copy,
+// builder/node/<node> selects a node in the open project. Anything else is ignored.
+export function parseBuilderLink(path) {
+  const parts = String(path ?? '').replace(/^\/|\/$/g,'').split('/')
+  if (parts[0] !== 'builder') return null
+  if (parts[1] === 'template' && templateIds.includes(parts[2]) && parts.length <= 4) {
+    const node = parts[3] ?? null
+    const names = [...fixedNodes, ...template(parts[2]).inputs.map(v => v.name)]
+    if (node !== null && !names.includes(node)) return null
+    return {template:parts[2], node}
+  }
+  if (parts[1] === 'node' && parts.length === 3 && /^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(parts[2])) return {template:null, node:parts[2]}
+  return null
+}
+
 export function newRelation(draft) {
   let i=1
   const ids=new Set([...draft.inputs,...(draft.relations||[])].map(v=>v.name))

@@ -87,8 +87,14 @@ const records = [
     'Alternative reorder point (baseline 10 units)',0,40,18],
 ]
 
+// Lessons that use the Builder open a fresh template with the relevant node selected.
+const builderLinks = {
+  L11: {template:'budget', node:'event', label:'Inspect the budget threshold in Builder'},
+  L12: {template:'budget', node:'metric', label:'Set seed and sample count in Builder'},
+}
+
 export const curriculum = records.map(([title,challenge,level,labs,outcome,theory,worked,mistake,reflection,control,min,max,initial],i) => {
   const n=String(i+1).padStart(2,'0')
   return {id:'L'+n,challengeId:'C'+n,version:1,graderVersion:1,title,challenge,level,labs,outcome,theory,worked,mistake,reflection,
-    control:{label:control,min,max,initial},seed:42,timeMinutes:15,prerequisites:i ? ['L'+String(i).padStart(2,'0')] : []}
+    control:{label:control,min,max,initial},...(builderLinks['L'+n] ? {builder:builderLinks['L'+n]} : {}),seed:42,timeMinutes:15,prerequisites:i ? ['L'+String(i).padStart(2,'0')] : []}
 })
