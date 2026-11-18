@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python'
+import r from 'react-syntax-highlighter/dist/esm/languages/prism/r'
+import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus'
+SyntaxHighlighter.registerLanguage('python',python)
+SyntaxHighlighter.registerLanguage('r',r)
 
 const CodeExporter = ({ code, language }) => {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+  const [copyError,setCopyError]=useState(false)
+  const handleCopy = async () => {
+    try {await navigator.clipboard.writeText(code)} catch {setCopyError(true);return}
+    setCopyError(false)
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -36,6 +42,7 @@ const CodeExporter = ({ code, language }) => {
           </span>
         </button>
       </div>
+      {copyError && <p role="status">Clipboard access is unavailable. Select and copy the code below.</p>}
       <div className="code-block" style={{ padding: 0, overflow: 'hidden', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <SyntaxHighlighter
           language={language.toLowerCase()}

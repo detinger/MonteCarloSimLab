@@ -1,0 +1,51 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+S0 = 100       # Initial stock price
+mu = 0.05       # Expected return (drift)
+sigma = 0.2    # Volatility
+T = 252 / 252  # Time horizon in years
+dt = 1 / 252     # Time step 
+paths = 5        # Number of simulated paths
+N = 252        # Number of time steps
+
+# Array to store simulated paths
+S = np.zeros((N + 1, paths))
+S[0] = S0
+
+# Simulate paths
+for t in range(1, N + 1):
+    Z = np.random.standard_normal(paths)
+    S[t] = S[t-1] * np.exp((mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z)
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+plt.plot(S)
+plt.title("Monte Carlo Simulation: Geometric Brownian Motion")
+plt.xlabel("Days")
+plt.ylabel("Stock Price")
+plt.grid(True)
+plt.show()
+
+S0 <- 100
+mu <- 0.05
+sigma <- 0.2
+days <- 252
+dt <- 1 / 252
+paths <- 5
+T <- days * dt
+
+# Create matrix to store paths
+S <- matrix(0, nrow = days + 1, ncol = paths)
+S[1, ] <- S0
+
+# Simulate paths
+for (t in 2:(days + 1)) {
+  Z <- rnorm(paths, mean = 0, sd = 1)
+  S[t, ] <- S[t-1, ] * exp((mu - 0.5 * sigma^2) * dt + sigma * sqrt(dt) * Z)
+}
+
+# Plotting
+matplot(S, type = "l", lty = 1, col = rainbow(paths), 
+        main = "Monte Carlo Sim: Geometric Brownian Motion",
+        xlab = "Days", ylab = "Stock Price")

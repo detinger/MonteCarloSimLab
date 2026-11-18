@@ -1,0 +1,47 @@
+.learning { display:grid; gap:18px; max-width:1180px; color:var(--text); }
+.learning :is(h1,h2,h3,p) { margin:0; }
+.learning h1 { font-size:clamp(25px,3vw,34px); line-height:1.18; letter-spacing:-.03em; }
+.learning h2 { font-size:18px; line-height:1.32; }
+.learning h3 { font-size:15px; line-height:1.35; }
+.learning p,.learning li { font-size:14px; line-height:1.65; }
+.learning header p,.learn-item p,.learning small,.learn-filters span { color:var(--text-muted); }
+.learning header { display:grid; gap:6px; }
+.learning small { font-size:12px; }
+.learning a { text-decoration:none; color:var(--primary); }
+.learn-filters,.learn-actions,.learn-links { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.learn-filters label { display:flex; align-items:center; gap:6px; padding-left:9px; border:1px solid var(--border-strong); border-radius:6px; background:var(--bg-elevated); color:var(--text-muted); }
+.learning :is(input,select,textarea) { background:var(--bg-elevated); color:var(--text); font:inherit; font-size:14px; min-width:0; max-width:100%; }
+.learn-filters label input { border:none; }
+.learn-filters :is(input,select),.learn-field :is(input,textarea,select) { min-height:34px; padding:6px 8px; border-radius:6px; border:1px solid var(--border-strong); }
+.learn-filters span { font-size:13px; margin-left:auto; }
+.learn-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr)); gap:14px; }
+.learn-item,.learn-card,.learn-next { background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm); }
+.learn-item { display:flex; flex-direction:column; align-items:flex-start; gap:9px; }
+.learn-item h2 { color:var(--text); }
+.learn-item span,.learn-next,.learn-back,.learn-links a { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; }
+.learn-item span { margin-top:auto; padding-top:8px; }
+.learn-item:hover,.learn-next:hover { border-color:var(--primary); }
+.learn-article { display:grid; max-width:76ch; gap:14px; }
+.learn-card { display:grid; justify-items:start; gap:12px; min-width:0; }
+.learn-formula,.learn-observed,.learning output { display:block; width:100%; border-radius:6px; padding:10px 12px; background:var(--bg-subtle); color:var(--text); overflow:auto; }
+.learn-observed,.learning output { font:13px var(--font-mono); line-height:1.6; }
+.learn-formula { text-align:center; }
+.learn-field { font-size:13px; font-weight:600; display:grid; gap:5px; width:100%; }
+.learn-field input:not([type=file]),.learn-field select { width: min(100%,430px); }
+.learn-field textarea { width:100%; resize:vertical; min-height:74px; }
+.learning button { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:34px; font:inherit; font-size:13px; cursor:pointer; border:1px solid var(--border-strong); border-radius:6px; background:var(--bg-elevated); color:var(--text); padding:6px 10px; }
+.learning button:hover:enabled { background:var(--bg-hover); }
+.learning button:disabled { opacity:.55; cursor:default; }
+.learning .learn-primary { color:var(--text-on-primary); background:var(--primary); border-color:var(--primary); }
+.learning .learn-primary:hover:enabled { background:var(--primary-hover); }
+.learning fieldset { border:0; min-width:0; padding:0; }
+.learning legend { font-size:14px; font-weight:600; margin-bottom:6px; }
+.learn-option { display:flex; gap:8px; align-items:center; font-size:14px; min-height:32px; }
+.learn-option input { accent-color:var(--primary); }
+.learn-card :is(ul,ol) { margin:0; padding-left:20px; }
+.learn-correct,.learn-revise { padding:10px 12px; background:var(--success-soft); color:var(--success); border-radius:6px; }
+.learn-revise { color:var(--text); background:var(--warning-soft); }
+.learn-card summary { cursor:pointer; font-weight:600; }
+.learn-traces { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:12px; width:100%; }
+.learn-traces>div { display:grid; align-content:start; gap:6px; }
+.learn-next { flex-wrap:wrap; }

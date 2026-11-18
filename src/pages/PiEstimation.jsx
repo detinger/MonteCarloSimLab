@@ -1,167 +1,254 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card } from '../components/ui/Card';
-import { Slider } from '../components/ui/Slider';
-import CodeExporter from '../components/CodeExporter';
-import { Latex } from '../components/ui/Latex';
+import {resultNumber} from '../components/preferences'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Download, FolderOpen, Pause, Play, RotateCcw, Save, Square, Upload } from 'lucide-react'
+import { downloadRunBundle } from '../components/runBundle'
+import CodeExporter from '../components/CodeExporter'
+import { Latex } from '../components/ui/Latex'
+import { ENGINE_VERSION, validate } from '../engine/index.js'
+import { startRun } from '../engine/client.js'
+import { pythonScript, rScript, notebook } from '../engine/export.js'
+import { Dartboard, Convergence } from './PiPlots'
+import { downloadPiFile, initialPiModel, piBundle, piModelFromFields, readPiBundle, savedPiRun } from './piSession'
+import '../styles/pi.css'
 
-const PiEstimation = () => {
-  const [numPoints, setNumPoints] = useState(1000);
-  const [piEstimate, setPiEstimate] = useState(0);
-  const canvasRef = useRef(null);
+const count = new Intl.NumberFormat().format
+const decimal = (n, precision = 4) => resultNumber(n,v=>Number.isFinite(v) ? v.toFixed(precision) : '—')
 
-  // Generate Python Code
-  const pythonCode = `import random
+export default function PiEstimation() {
+  const [seed, setSeed] = useState(String(initialPiModel.seed))
+  const [samples, setSamples] = useState(String(initialPiModel.samples))
+  const [run, setRun] = useState(null)
+  const [previousRun, setPreviousRun] = useState(null)
+  const [overlay, setOverlay] = useState(false)
+  const lastComplete = useRef(null)
+  const [notice, setNotice] = useState('')
+  const [opening, setOpening] = useState(false)
+  const [exportKind, setExportKind] = useState('ipynb')
+  const [codeOpen, setCodeOpen] = useState(false)
+  const job = useRef(null)
+  const generation = useRef(0)
+  const fileInput = useRef(null)
+  const plot = useRef(null)
+  const model = piModelFromFields(seed, samples)
+  const issues = validate(model)
+  const result = run?.result
+  const status = run?.status ?? 'ready'
+  const active = status === 'running' || status === 'paused'
+  const complete = status === 'complete'
+  const earlier = run && (run.model.seed !== model.seed || run.model.samples !== model.samples)
+  const exportable = complete && result?.n === run.model.samples
 
-def estimate_pi_mc(n):
-    inside_circle = 0
-    for _ in range(n):
-        x = random.uniform(-1, 1)
-        y = random.uniform(-1, 1)
-        if x**2 + y**2 <= 1:
-            inside_circle += 1
-            
-    pi_estimate = 4 * inside_circle / n
-    return pi_estimate
-
-n_simulations = ${numPoints}
-estimated_pi = estimate_pi_mc(n_simulations)
-print(f"Estimated Pi with {n_simulations} points is: {estimated_pi}")`;
-
-  // Generate R Code
-  const rCode = `estimate_pi_mc <- function(n) {
-  x <- runif(n, min = -1, max = 1)
-  y <- runif(n, min = -1, max = 1)
-  
-  inside_circle <- sum((x^2 + y^2) <= 1)
-  pi_estimate <- 4 * inside_circle / n
-  
-  return(pi_estimate)
-}
-
-n_simulations <- ${numPoints}
-estimated_pi <- estimate_pi_mc(n_simulations)
-cat(sprintf("Estimated Pi with %d points is: %f\\n", n_simulations, estimated_pi))`;
+  const begin = useCallback((snapshot, expectedHits) => {
+    const id = ++generation.current
+    job.current?.dispose()
+    setNotice('')
+    setPreviousRun(lastComplete.current)
+    setRun({ model: snapshot, status: 'running', result: null })
+    const fail = message => {
+      if (generation.current !== id) return
+      setNotice(String(message))
+      setRun(previous => ({ ...previous, status: 'failed' }))
+    }
+    try {
+      job.current = startRun(snapshot, update => {
+        if (generation.current !== id) return
+        if (update.status === 'complete' && expectedHits !== undefined) {
+          if (expectedHits !== update.hits) {
+            fail('The replay differs from the saved hit count. Check the run file and engine version.')
+            return
+          }
+          setNotice('Reopened run. Replay reproduced the saved hit count.')
+        }
+        const currentRun = { model: snapshot, status: update.status, result: update }
+        if (update.status === 'complete') lastComplete.current = currentRun
+        setRun(currentRun)
+      }, fail)
+    } catch (error) {
+      fail(error.message)
+    }
+  }, [])
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, width, height);
-
-    // Draw circle background
-    ctx.fillStyle = '#161b22';
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, width / 2, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(88, 166, 255, 0.3)';
-    ctx.stroke();
-
-    let inside = 0;
-
-    // Draw points
-    for (let i = 0; i < numPoints; i++) {
-      // x, y mapped to -1 to 1
-      const x = Math.random() * 2 - 1;
-      const y = Math.random() * 2 - 1;
-
-      const isInside = (x * x + y * y) <= 1;
-      if (isInside) inside++;
-
-      // Map to canvas coordinates
-      const canvasX = (x + 1) * width / 2;
-      const canvasY = (y + 1) * height / 2;
-
-      ctx.fillStyle = isInside ? 'rgba(88, 166, 255, 0.8)' : 'rgba(163, 113, 247, 0.6)';
-      ctx.fillRect(canvasX, canvasY, 2, 2);
+    begin(initialPiModel)
+    return () => {
+      job.current?.dispose()
     }
+  }, [begin])
 
-    setPiEstimate(4 * (inside / numPoints));
-  }, [numPoints]);
+  async function reopen(file) {
+    setOpening(true)
+    try {
+      if (file && file.size > 65536) throw new Error('Choose a Pi run JSON file smaller than 64 KiB.')
+      const data = file ? JSON.parse(await file.text()) : await savedPiRun('open')
+      if (!data) throw new Error('No saved Pi run on this device. Complete a run and choose Save run.')
+      const saved = readPiBundle(data)
+      setSeed(String(saved.model.seed))
+      setSamples(String(saved.model.samples))
+      begin(saved.model, saved.hits)
+    } catch (error) {
+      setNotice(error instanceof SyntaxError ? 'The selected file contains invalid JSON.' : error.message)
+    } finally {
+      setOpening(false)
+    }
+  }
 
-  return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Estimating Pi (<Latex math={String.raw`\pi`} />)</h1>
+  async function save() {
+    try {
+      await savedPiRun('save', piBundle(run.model, result))
+      setNotice('Saved as the latest Pi run on this device.')
+    } catch (error) {
+      setNotice(`Could not save on this device. ${error.message} Download the run JSON to keep a copy.`)
+    }
+  }
 
-      <div className="grid grid-cols-2 gap-6" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '1.5rem', alignItems: 'stretch' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <Card title="Controls">
-            <Slider
-              label="Number of Points"
-              min={100} max={20000} step={100}
-              value={numPoints}
-              onChange={setNumPoints}
-              description="Adjust to see the Law of Large Numbers in action. More points yield a better approximation."
-            />
+  function download() {
+    try {
+      let content
+      let mime = 'text/plain'
+      switch (exportKind) {
+        case 'zip': {
+          const manifest = piBundle(run.model, result)
+          return downloadRunBundle({name:'estimating-pi-'+run.model.seed,model:run.model,manifest,
+            summary:{...manifest.result, convergence:result.convergence},notebook:notebook(run.model)})
+        }
+        case 'png': {
+          const original = plot.current.querySelector('canvas')
+          const snapshot = document.createElement('canvas')
+          snapshot.width = 550
+          snapshot.height = 580
+          const ctx = snapshot.getContext('2d')
+          const style = getComputedStyle(original)
+          ctx.fillStyle = style.getPropertyValue('--bg-elevated').trim()
+          ctx.fillRect(0, 0, 550, 580)
+          ctx.fillStyle = style.getPropertyValue('--text').trim()
+          ctx.font = '20px system-ui'
+          ctx.fillText('Estimating Pi · dart coordinates', 24, 34)
+          ctx.font = '14px system-ui'
+          ctx.fillText('Seed '+run.model.seed+' · '+count(result.n)+' darts · estimate '+decimal(result.mean,5),24,58)
+          ctx.drawImage(original,40,70)
+          ctx.fillText('Circles · inside     Squares · outside',24,555)
+          const link = document.createElement('a')
+          link.download = 'estimating-pi-'+run.model.seed+'.png'
+          link.href = snapshot.toDataURL('image/png')
+          link.click()
+          return
+        }
+        case 'json': content = JSON.stringify(piBundle(run.model, result), null, 2); mime = 'application/json'; break
+        case 'ipynb': content = JSON.stringify(notebook(run.model), null, 2); mime = 'application/x-ipynb+json'; break
+        case 'py': content = pythonScript(run.model); break
+        case 'R': content = rScript(run.model); break
+        case 'csv': {
+          const fields = ['seed', 'completed_darts', 'hits', 'pi_estimate', 'scaled_wilson_95_lower', 'scaled_wilson_95_upper']
+          content = [fields.join(','), [run.model.seed, result.n, result.hits, result.mean, ...result.meanCI].join(',')].join('\n') + '\n'
+          mime = 'text/csv'
+          break
+        }
+      }
+      downloadPiFile(`estimating-pi-${run.model.seed}-${run.model.samples}.${exportKind}`, content, mime)
+    } catch (error) {
+      setNotice(error.message)
+    }
+  }
 
-            <div style={{ marginTop: '2rem' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Actual Pi (Math.PI)</div>
-              <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-mono)' }}>{Math.PI.toFixed(6)}</div>
-            </div>
-
-            <div style={{ marginTop: '1rem' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Estimated Pi</div>
-              <div className="text-accent" style={{ fontSize: '2rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                {piEstimate.toFixed(6)}
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1rem' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Error</div>
-              <div style={{ fontSize: '1.1rem', fontFamily: 'var(--font-mono)', color: Math.abs(Math.PI - piEstimate) < 0.05 ? '#3fb950' : '#f85149' }}>
-                {(Math.abs(Math.PI - piEstimate) / Math.PI * 100).toFixed(2)}%
-              </div>
-            </div>
-          </Card>
-
-          <Card title="Concept">
-            <p style={{ fontSize: '0.9rem' }}>
-              By inscribing a circle of radius 1 inside a 2x2 square, the ratio of the circle's area to the square's area is <strong><Latex math={String.raw`\frac{\pi}{4}`} /></strong>.
-              <br /><br />
-              If we throw darts randomly into the square, the fraction of darts that hit inside the circle will approximate <Latex math={String.raw`\frac{\pi}{4}`} />.
-            </p>
-          </Card>
+  const n = result?.n ?? 0
+  const p = result?.probability
+  const estimate = n ? result.mean : undefined
+  const error = Math.abs(estimate - Math.PI)
+  const reset = () => {
+    setSamples(String(initialPiModel.samples))
+    setSeed(String(initialPiModel.seed))
+    begin(initialPiModel)
+  }
+  return <article className="pi-page">
+    <header className="pi-header"><h1>Estimating Pi</h1><p>How accurately can random darts estimate the area of a unit circle?</p></header>
+    <div className="pi-workspace">
+      <section className="pi-card pi-config">
+        <h2>Experiment setup</h2>
+        <fieldset disabled={active || opening}>
+          <label htmlFor="pi-samples">Number of darts</label>
+          <input id="pi-samples" type="text" inputMode="numeric" autoComplete="off" value={samples} onChange={e => setSamples(e.target.value)}/>
+          <input className="pi-slider" aria-label="Number of darts from 100 to 20,000" type="range" min="100" max="20000" step="100"
+            value={Number.isFinite(model.samples) ? Math.min(20000, Math.max(100, model.samples)) : 100}
+            onChange={e => setSamples(e.target.value)}/>
+          <div className="pi-presets" aria-label="Sample size presets">{[100, 1000, 10000, 100000].map(value =>
+            <button key={value} aria-pressed={model.samples === value} onClick={() => setSamples(String(value))}>{value < 1000 ? value : value / 1000 + 'k'}</button>
+          )}</div>
+          <label htmlFor="pi-seed">Random seed</label>
+          <input id="pi-seed" type="text" inputMode="numeric" autoComplete="off" value={seed} onChange={e => setSeed(e.target.value)}/>
+          <small>Reuse the seed and dart count to reproduce a run.</small>
+        </fieldset>
+        {issues.length > 0 && <p className="pi-validation" role="status">{issues.join(' ')}</p>}
+        <div className="pi-actions">
+          {active ? <>
+            <button className="pi-primary" onClick={() => status === 'paused' ? job.current.resume() : job.current.pause()}>
+              {status === 'paused' ? <Play/> : <Pause/>}{status === 'paused' ? 'Resume' : 'Pause'}
+            </button>
+            <button onClick={() => job.current.cancel()}><Square/> Cancel</button>
+          </> : <>
+            <button className="pi-primary" disabled={issues.length > 0 || opening} onClick={() => begin(model)}><Play/> Run simulation</button>
+            <button onClick={reset} disabled={opening}><RotateCcw/> Reset</button>
+          </>}
         </div>
-
-        <div>
-          <Card>
-            <div style={{ display: 'flex', justifyContent: 'center', background: '#010409', borderRadius: '8px', padding: '1rem', border: '1px solid var(--card-border)' }}>
-              <canvas
-                ref={canvasRef}
-                width={400}
-                height={400}
-                style={{ background: '#0d1117', borderRadius: '4px', maxWidth: '100%', height: 'auto', border: '1px solid rgba(255,255,255,0.05)' }}
-              />
-            </div>
-            <p className="text-muted" style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--accent-color)' }}>■</span> Inside Circle &nbsp;&nbsp;&nbsp;
-              <span style={{ color: '#a371f7' }}>■</span> Outside Circle
-            </p>
-          </Card>
-        </div>
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem' }}>Export Code</h2>
-        <Card>
-          <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-            Run this simulation locally. The code dynamically updates based on the parameters chosen above.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <CodeExporter language="Python" code={pythonCode} />
-            <CodeExporter language="R" code={rCode} />
+        <div className="pi-progress">
+          <div><strong role="status">{status === 'complete' ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1)}</strong>
+            <span>{count(n)} / {count(run?.model.samples ?? initialPiModel.samples)}</span>
           </div>
-        </Card>
-      </div>
-
+          <progress aria-label="Completed darts" value={n} max={run?.model.samples ?? initialPiModel.samples}/>
+        </div>
+        <div className="pi-reopen">
+          <button disabled={active || opening} onClick={() => reopen()}><FolderOpen/> Reopen saved run</button>
+          <button disabled={active || opening} onClick={() => fileInput.current.click()}><Upload/> Import run JSON</button>
+          <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={e => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) reopen(file)
+          }}/>
+        </div>
+      </section>
+      <section ref={plot} className="pi-card pi-visual">
+        <header><h2>Dartboard</h2><span className="pi-seed-label">Seed {run?.model.seed ?? initialPiModel.seed}</span></header>
+        <Dartboard result={result}/>
+      </section>
     </div>
-  );
-};
-
-export default PiEstimation;
+    {notice && <p role="status" className="pi-notice">{notice}</p>}
+    <section className="pi-card">
+      <header><h2>Run results</h2>{earlier && <strong className="pi-stale">From earlier settings</strong>}</header>
+      <p className="pi-caption">Seed {run?.model.seed ?? initialPiModel.seed} · {count(n)} completed darts · {ENGINE_VERSION}</p>
+      <dl className="pi-metrics">
+        <div><dt>Estimated π</dt><dd>{decimal(estimate, 5)}</dd></div>
+        <div><dt>95% Wilson interval for π</dt><dd>{n && result.meanCI ? result.meanCI.map(v => decimal(v)).join(' – ') : '—'}</dd></div>
+        <div><dt>Analytical π</dt><dd>{Math.PI.toFixed(5)}</dd></div>
+        <div><dt>Hits inside</dt><dd>{n ? count(result.hits) + ' (' + decimal(100 * p, 1) + '%)' : '—'}</dd></div>
+        <div><dt>Absolute / relative error</dt><dd>{n ? decimal(error, 5) + ' / ' + decimal(100 * error / Math.PI, 2) + '%' : '—'}</dd></div>
+        <div><dt>Estimated standard error</dt><dd>{n > 1 ? decimal(4 * Math.sqrt(p * (1 - p) / (n - 1)), 5) : '—'}</dd></div>
+      </dl>
+      <p className="pi-caption">The interval measures sampling uncertainty. It scales the 95% Wilson interval for the hit probability by four.</p>
+      <h3>Convergence toward π</h3>
+      {previousRun && <label className="pi-overlay"><input type="checkbox" checked={overlay} onChange={e => setOverlay(e.target.checked)}/>
+        Overlay previous run (seed {previousRun.model.seed}, {count(previousRun.result.n)} darts)</label>}
+      <Convergence result={result} previous={overlay ? previousRun?.result : null}/>
+    </section>
+    <section className="pi-card">
+      <h2>Why it works</h2>
+      <p>Draw the two coordinates independently and uniformly from −1 to 1. A dart lands inside or on the circle when <Latex math={String.raw`x^2+y^2\leq 1`}/>. The circle has area π and the square has area 4, so a dart hits the circle with probability π/4.</p>
+      <p><Latex math={String.raw`\hat\pi=4\frac{\text{hits}}{\text{darts}}`}/></p>
+      <p>As more independent darts accumulate, the hit fraction converges to the area ratio. Individual runs can move away from π along the way. Quadrupling the dart count roughly halves the standard error.</p>
+    </section>
+    <section className="pi-card">
+      <h2>Save and export</h2>
+      <p className="pi-caption">Exports use the displayed run. Open the notebook in Jupyter or upload it in Colab.</p>
+      <div className="pi-actions">
+        <button disabled={!exportable} onClick={save}><Save/> Save run</button>
+        <select aria-label="Pi export format" value={exportKind} onChange={e => setExportKind(e.target.value)}>
+          <option value="ipynb">Colab notebook (.ipynb)</option><option value="json">Reproducible run (.json)</option>
+          <option value="zip">Run bundle (.zip)</option><option value="png">Dartboard image (.png)</option>
+          <option value="csv">Run results (.csv)</option><option value="py">Python (.py)</option><option value="R">R (.R)</option>
+        </select>
+        <button disabled={!exportable} onClick={download}><Download/> Download</button>
+      </div>
+      {exportable && <details onToggle={e => setCodeOpen(e.currentTarget.open)}><summary>Python and R code</summary>
+        {codeOpen && <><CodeExporter language="Python" code={pythonScript(run.model)}/><CodeExporter language="R" code={rScript(run.model)}/></>}
+      </details>}
+    </section>
+  </article>
+}

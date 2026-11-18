@@ -41,3 +41,10 @@ obj/
 
 # Environment variables (Sensitive!)
 .env
+
+# Browser regression output
+test-results/
+playwright-report/
+
+# Local Netlify folder
+.netlify

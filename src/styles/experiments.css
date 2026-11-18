@@ -1,0 +1,10 @@
+.runner-page{display:grid;gap:18px}
+.runner-page .intro{margin:6px 0 0}
+.runner-page .research-panel{min-width:0}
+.runner-page .research-panel h2,.runner-page button,.run-actions,.run-export{display:flex;align-items:center;gap:7px}
+.run-actions{flex-wrap:wrap}
+.run-actions a,.run-export{color:var(--primary);font-weight:550;font-size:.875rem}
+.runner-page progress{width:100%;accent-color:var(--primary)}
+.run-preview{font:12px/1.55 var(--font-mono);color:var(--text);background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:440px;overflow:auto;padding:12px;margin:12px 0}
+.run-compare{margin-top:18px;border-top:1px solid var(--border);padding-top:14px}
+.runner-page .scroll-table td{white-space:nowrap}

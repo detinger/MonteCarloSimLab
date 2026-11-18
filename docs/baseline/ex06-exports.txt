@@ -1,0 +1,63 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def simulate_project_schedule(n_simulations):
+    # Mean and standard deviation for each sequential task
+    procurement = np.random.normal(loc=30, scale=6, size=n_simulations)
+    construction = np.random.normal(loc=60, scale=12, size=n_simulations)
+    inspection = np.random.normal(loc=10, scale=2, size=n_simulations)
+    
+    # Ensure no task takes negative time
+    procurement = np.maximum(procurement, 0)
+    construction = np.maximum(construction, 0)
+    inspection = np.maximum(inspection, 0)
+    
+    # Total project duration
+    total_duration = procurement + construction + inspection
+    
+    # Calculate probabilities
+    target_days = 100
+    prob_target = np.mean(total_duration <= target_days)
+    prob_120 = np.mean(total_duration <= 120)
+    
+    print(f"Probability of completion within {target_days} days: {prob_target * 100:.2f}%")
+    print(f"Probability of completion within 120 days: {prob_120 * 100:.2f}%")
+    
+    plt.hist(total_duration, bins=50, color='#58a6ff', alpha=0.7)
+    plt.axvline(target_days, color='r', linestyle='dashed', linewidth=2, label=f'Target ({target_days} days)')
+    plt.title('Project Completion Time Distribution')
+    plt.xlabel('Days')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.show()
+
+simulate_project_schedule(5000)
+
+simulate_project_schedule <- function(n_simulations) {
+  proc_mean <- 30
+  proc_sd <- proc_mean * 0.2
+  
+  const_mean <- 60
+  const_sd <- const_mean * 0.2
+  
+  insp_mean <- 10
+  insp_sd <- 2
+  
+  procurement <- pmax(0, rnorm(n_simulations, mean=proc_mean, sd=proc_sd))
+  construction <- pmax(0, rnorm(n_simulations, mean=const_mean, sd=const_sd))
+  inspection <- pmax(0, rnorm(n_simulations, mean=insp_mean, sd=insp_sd))
+  
+  total_duration <- procurement + construction + inspection
+  
+  target_days <- 100
+  prob_target <- mean(total_duration <= target_days)
+  prob_120 <- mean(total_duration <= 120)
+  
+  cat(sprintf("Probability of completion within %d days: %.2f%%\n", target_days, prob_target * 100))
+  cat(sprintf("Probability of completion within 120 days: %.2f%%\n", prob_120 * 100))
+  
+  hist(total_duration, breaks=50, col="#58a6ff", main="Project Completion Time", xlab="Days")
+  abline(v=target_days, col="red", lwd=2, lty=2)
+}
+
+simulate_project_schedule(5000)

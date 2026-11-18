@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-18T12:27:45.652Z",
+  "browser": "158.0.8127.37",
+  "cpu": "Apple M1 Ultra",
+  "platform": "darwin arm64",
+  "method": "20 fresh dedicated workers per workload, seed 42, nearest-rank P95. Wall time includes worker startup and delivery of the final progress message. V8 heap is measured after completion, before worker termination, without forced GC. An 8 ms timer observes main-thread scheduling delay.",
+  "rows": [
+    {
+      "samples": 1000,
+      "hits": 811,
+      "p95JobMs": 10.199999988079071,
+      "p95WorkerHeapBytes": 682904,
+      "p95MaxMainTimerDelayMs": 0.40000003576278687
+    },
+    {
+      "samples": 10000,
+      "hits": 7876,
+      "p95JobMs": 10.199999988079071,
+      "p95WorkerHeapBytes": 1438956,
+      "p95MaxMainTimerDelayMs": 1.100000023841858
+    },
+    {
+      "samples": 100000,
+      "hits": 78628,
+      "p95JobMs": 24,
+      "p95WorkerHeapBytes": 1466868,
+      "p95MaxMainTimerDelayMs": 1.399999976158142
+    },
+    {
+      "samples": 1000000,
+      "hits": 785169,
+      "p95JobMs": 133.89999997615814,
+      "p95WorkerHeapBytes": 1384588,
+      "p95MaxMainTimerDelayMs": 1.399999976158142
+    }
+  ]
+}

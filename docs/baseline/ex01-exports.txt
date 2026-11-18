@@ -1,0 +1,30 @@
+import random
+
+def estimate_pi_mc(n):
+    inside_circle = 0
+    for _ in range(n):
+        x = random.uniform(-1, 1)
+        y = random.uniform(-1, 1)
+        if x**2 + y**2 <= 1:
+            inside_circle += 1
+            
+    pi_estimate = 4 * inside_circle / n
+    return pi_estimate
+
+n_simulations = 1000
+estimated_pi = estimate_pi_mc(n_simulations)
+print(f"Estimated Pi with {n_simulations} points is: {estimated_pi}")
+
+estimate_pi_mc <- function(n) {
+  x <- runif(n, min = -1, max = 1)
+  y <- runif(n, min = -1, max = 1)
+  
+  inside_circle <- sum((x^2 + y^2) <= 1)
+  pi_estimate <- 4 * inside_circle / n
+  
+  return(pi_estimate)
+}
+
+n_simulations <- 1000
+estimated_pi <- estimate_pi_mc(n_simulations)
+cat(sprintf("Estimated Pi with %d points is: %f\n", n_simulations, estimated_pi))

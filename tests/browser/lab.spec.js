@@ -1,0 +1,71 @@
+import {test,expect} from '@playwright/test'
+
+test('direct lab and builder links run from production assets',async({page})=>{
+  await page.goto('/examples/EX01')
+  await expect(page.getByRole('heading',{name:/Estimating Pi/i}).first()).toBeVisible()
+  await page.getByRole('button',{name:'Run simulation',exact:true}).click()
+  await expect(page.getByRole('button',{name:'Save run',exact:true})).toBeEnabled()
+  const file=page.waitForEvent('download')
+  await page.getByRole('button',{name:'Download',exact:true}).click()
+  expect((await file).suggestedFilename()).toMatch(/\.ipynb$/)
+  await page.goto('/builder')
+  await expect(page.getByRole('heading',{name:'Simulation Builder',exact:true})).toBeVisible()
+})
+test('a paired analysis and distribution preview produce tabular results',async({page})=>{
+  await page.goto('/#/compare')
+  await page.getByLabel('Sampling design').selectOption('paired')
+  await page.getByRole('button',{name:'Run comparison'}).click()
+  await expect(page.getByRole('columnheader',{name:/95% interval for change/})).toBeVisible()
+  await page.goto('/#/distributions')
+  await page.getByRole('button',{name:'Draw samples',exact:true}).click()
+  await page.getByText('Inspect bin table').click()
+  await expect(page.getByRole('columnheader',{name:'Model share'})).toBeVisible()
+})
+test('catalog, themes and learning routes work on a phone',async({page})=>{
+  await page.setViewportSize({width:320,height:740})
+  await page.goto('/#/labs')
+  await page.getByRole('searchbox').fill('birthday')
+  await page.getByRole('link',{name:/Combinatorics.*Birthday/}).click()
+  await expect(page.getByRole('heading',{name:'Birthday Paradox',exact:true})).toBeVisible()
+  await page.getByLabel('Color theme').selectOption('dark')
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme','dark')
+  await expect(page.getByRole('heading',{name:'Related learning'})).toBeVisible()
+  await page.locator('.related-learning a').first().click()
+  await expect(page.getByRole('heading',{name:'Probability distributions'})).toBeVisible()
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+})
+
+test('all twelve experiments fit a narrow viewport in both themes',async({page})=>{
+  const errors=[]
+  page.on('pageerror',e=>errors.push(e.message))
+  await page.setViewportSize({width:320,height:750})
+  for(const theme of ['light','dark']) {
+    for(const id of ['pi','integration','montyhall','randomwalk','stock','projectmgmt','manufacturing','coins','birthday','reliability','queue','inventory']) {
+      await page.goto('/#/'+id)
+      await page.getByLabel('Color theme').selectOption(theme)
+      const screen=page.locator('.screen-'+id)
+      await expect(screen.getByRole('heading',{level:1})).toBeVisible()
+      const run=screen.getByRole('button',{name:'Run simulation',exact:true})
+      await expect(run).toBeEnabled()
+      await run.click()
+      await expect(run).toBeEnabled()
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth),id+' in '+theme).toBeLessThanOrEqual(320)
+    }
+  }
+  expect(errors).toEqual([])
+})
+test('display preferences persist and update estimates without rerunning the model',async({page})=>{
+  await page.goto('/#/pi')
+  const pageBody=page.locator('.screen-pi')
+  await expect(pageBody.getByRole('button',{name:'Save run',exact:true})).toBeEnabled()
+  const estimate=pageBody.locator('dt').filter({hasText:'Estimated π'}).locator('..').locator('dd')
+  const original=await estimate.innerText()
+  await page.getByRole('link',{name:'Settings',exact:true}).click()
+  await page.getByLabel('Numeric result precision').selectOption('4')
+  await page.getByRole('link',{name:'Estimating Pi',exact:true}).first().click()
+  expect(Number(await estimate.innerText())).toBe(Number(Number(original).toPrecision(4)))
+  await page.goto('/#/settings')
+  await page.reload()
+  await expect(page.getByLabel('Numeric result precision')).toHaveValue('4')
+})

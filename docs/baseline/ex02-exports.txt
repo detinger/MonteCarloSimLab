@@ -1,0 +1,40 @@
+import random
+import math
+
+def mc_integrate_sin(n):
+    inside_area = 0
+    box_width = math.pi
+    box_height = 1.0
+    
+    for _ in range(n):
+        x = random.uniform(0, box_width)
+        y = random.uniform(0, box_height)
+        
+        if y <= math.sin(x):
+            inside_area += 1
+            
+    estimated_area = (inside_area / n) * (box_width * box_height)
+    return estimated_area
+
+n_simulations = 1000
+estimated_area = mc_integrate_sin(n_simulations)
+print(f"Estimated area with {n_simulations} points is: {estimated_area:.6f}")
+print(f"Exact area is: 2.0")
+
+mc_integrate_sin <- function(n) {
+  box_width <- pi
+  box_height <- 1.0
+  
+  x <- runif(n, min = 0, max = box_width)
+  y <- runif(n, min = 0, max = box_height)
+  
+  inside_area <- sum(y <= sin(x))
+  estimated_area <- (inside_area / n) * (box_width * box_height)
+  
+  return(estimated_area)
+}
+
+n_simulations <- 1000
+estimated_area <- mc_integrate_sin(n_simulations)
+cat(sprintf("Estimated area with %d points is: %f\n", n_simulations, estimated_area))
+cat("Exact area is: 2.0\n")

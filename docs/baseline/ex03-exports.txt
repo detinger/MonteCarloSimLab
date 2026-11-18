@@ -1,0 +1,65 @@
+import random
+
+def simulate_monty_hall(n):
+    stay_wins = 0
+    switch_wins = 0
+    
+    for _ in range(n):
+        # 0, 1, 2 represent the three doors
+        car_door = random.randint(0, 2)
+        chosen_door = random.randint(0, 2)
+        
+        # Monty opens a door that has a goat and wasn't chosen
+        remaining_doors = [d for d in [0, 1, 2] if d != chosen_door and d != car_door]
+        monty_opens = random.choice(remaining_doors)
+        
+        # Determine the switched door
+        switched_door = [d for d in [0, 1, 2] if d != chosen_door and d != monty_opens][0]
+        
+        # Evaluate strategies
+        if chosen_door == car_door:
+            stay_wins += 1
+        if switched_door == car_door:
+            switch_wins += 1
+            
+    return stay_wins / n, switch_wins / n
+
+n_simulations = 100
+stay_rate, switch_rate = simulate_monty_hall(n_simulations)
+print(f"After {n_simulations} games:")
+print(f"Stay Win Rate: {stay_rate * 100:.2f}%")
+print(f"Switch Win Rate: {switch_rate * 100:.2f}%")
+
+simulate_monty_hall <- function(n) {
+  stay_wins <- 0
+  switch_wins <- 0
+  
+  for(i in 1:n) {
+    doors <- c(1, 2, 3)
+    car_door <- sample(doors, 1)
+    chosen_door <- sample(doors, 1)
+    
+    # Monty opens a door with a goat
+    monty_options <- setdiff(doors, c(chosen_door, car_door))
+    if (length(monty_options) > 1) {
+      monty_opens <- sample(monty_options, 1)
+    } else {
+      monty_opens <- monty_options
+    }
+    
+    # Calculate switched door
+    switched_door <- setdiff(doors, c(chosen_door, monty_opens))
+    
+    # Evaluate strategies
+    if (chosen_door == car_door) stay_wins <- stay_wins + 1
+    if (switched_door == car_door) switch_wins <- switch_wins + 1
+  }
+  
+  c(stay = stay_wins / n, switch = switch_wins / n)
+}
+
+n_simulations <- 100
+rates <- simulate_monty_hall(n_simulations)
+cat(sprintf("After %d games:\n", n_simulations))
+cat(sprintf("Stay Win Rate: %.2f%%\n", rates["stay"] * 100))
+cat(sprintf("Switch Win Rate: %.2f%%\n", rates["switch"] * 100))

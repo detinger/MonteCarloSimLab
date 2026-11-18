@@ -1,0 +1,69 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def simulate_manufacturing(n_simulations, breakdown_prob, target_demand):
+    days = 30
+    max_daily_capacity = 100
+    
+    total_yields = []
+    
+    for _ in range(n_simulations):
+        # Machine breaks down with given probability (e.g., 5% = 0.05)
+        # 1 means fine, 0 means breakdown
+        machines_active = np.random.choice([0, 1], p=[breakdown_prob, 1 - breakdown_prob], size=days)
+        
+        # Working capacity (80% to 100% capacity) due to worker availability
+        worker_cap = np.random.normal(loc=0.9, scale=0.05, size=days)
+        worker_cap = np.clip(worker_cap, 0.5, 1.0)
+        
+        # Raw material availability (70% to 100%)
+        material_cap = np.random.normal(loc=0.85, scale=0.1, size=days)
+        material_cap = np.clip(material_cap, 0.4, 1.0)
+        
+        # Actual production per day
+        daily_production = max_daily_capacity * machines_active * worker_cap * material_cap
+        
+        total_yields.append(np.sum(daily_production))
+        
+    total_yields = np.array(total_yields)
+    prob_success = np.mean(total_yields >= target_demand)
+    
+    print(f"Probability of meeting demand ({target_demand} units): {prob_success * 100:.2f}%")
+    print(f"Average expected monthly output: {np.mean(total_yields):.0f} units")
+    
+    plt.hist(total_yields, bins=40, color='#3fb950', alpha=0.7)
+    plt.axvline(target_demand, color='r', linestyle='dashed', linewidth=2, label='Target Demand')
+    plt.title('Monthly Manufacturing Yield Distribution')
+    plt.xlabel('Total Units Produced')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.show()
+
+simulate_manufacturing(n_simulations=2000, breakdown_prob=0.05, target_demand=2400)
+
+simulate_manufacturing <- function(n_simulations, breakdown_prob, target_demand) {
+  days <- 30
+  max_daily_capacity <- 100
+  
+  total_yields <- numeric(n_simulations)
+  
+  for(i in 1:n_simulations) {
+    machines_active <- rbinom(days, 1, 1 - breakdown_prob)
+    
+    worker_cap <- pmin(1.0, pmax(0.5, rnorm(days, mean=0.9, sd=0.05)))
+    material_cap <- pmin(1.0, pmax(0.4, rnorm(days, mean=0.85, sd=0.1)))
+    
+    daily_production <- max_daily_capacity * machines_active * worker_cap * material_cap
+    total_yields[i] <- sum(daily_production)
+  }
+  
+  prob_success <- mean(total_yields >= target_demand)
+  
+  cat(sprintf("Probability of meeting demand (%d units): %.2f%%\n", target_demand, prob_success * 100))
+  cat(sprintf("Average expected monthly output: %.0f units\n", mean(total_yields)))
+  
+  hist(total_yields, breaks=40, col="#3fb950", main="Monthly Manufacturing Yield", xlab="Total Units Produced")
+  abline(v=target_demand, col="red", lwd=2, lty=2)
+}
+
+simulate_manufacturing(n_simulations=2000, breakdown_prob=0.05, target_demand=2400)

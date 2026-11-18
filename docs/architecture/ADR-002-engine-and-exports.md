@@ -1,0 +1,11 @@
+# Reproducible sampling and export
+
+The browser uses Random123 Philox2x32-10 with an unsigned 32-bit master seed. The multiplication is split into 16-bit parts to preserve the two exact result words in JavaScript. Three published known-answer vectors guard the transform. Builder variable identities select FNV-1a-derived stream keys. Validation rejects collisions. A replication index selects its counter, so batching and pausing have no effect on subsequent draws. [Random123 test vectors](https://github.com/DEShawResearch/random123/blob/main/tests/kat_vectors)
+
+A versioned project holds input parameters, units, variable names and formulas. Scalar derived nodes are traversed for cycles, parsed and dimension checked before their expressions expand into the scalar output. The compiler supports strict and inclusive lower and upper threshold events. Unknown operators and nonfinite outputs produce errors. Coordinates, display names and node positioning are excluded from the stream key.
+
+Workers post bounded displays and summaries. Welford updates keep the mean and sample variance online. For Pi and event rates, the UI gives Wilson bounds. Other independent-replication means use t intervals. Analysis retains an ordered output array to calculate interpolated quantiles. Independent comparisons use separate streams, a Welch interval for the mean change, and a Newcombe interval for the event-probability difference. Paired comparisons reuse draws and calculate t intervals from replication-wise differences.
+
+Language renderers consume compiled expressions and validated domain settings. Local kernel tests compare exported summaries with the JS fixtures. Extended Builder distributions use inverse CDFs; [the sampler notes](builder-distributions.md) give numerical limits and cross-language conventions. The five new teaching examples use R's seeded generators for independent statistical replication. Their Python notebooks use the browser's counter policy.
+
+Saved projects, domain snapshots and learning attempts use IndexedDB. Builder saves use revision checks to detect conflicting writers. Run bundles use fixed member names. A separate JSON importer validates model versions and input bounds. Headless browser tests exercise project replay, notebook download and mobile reflow.

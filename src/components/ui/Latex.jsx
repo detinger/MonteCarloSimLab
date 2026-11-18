@@ -11,9 +11,10 @@ export const Latex = ({ math, block = false }) => {
       });
     } catch (error) {
       console.warn('KaTeX error for input:', math, error.message);
-      return `<span style="color:red">${math}</span>`;
+      return null;
     }
   }, [math, block]);
 
+  if (html === null) return <span style={{color:"var(--error)"}}>{math}</span>;
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 };
