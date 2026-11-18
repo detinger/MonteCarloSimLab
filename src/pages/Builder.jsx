@@ -215,6 +215,7 @@ export default function Builder() {
   }
   function endResultsResize() { resultsResize.current = null }
   return <article className="builder">
+    <h1 className="sr-only">Simulation Builder</h1>
     <section className="bd-toolbar bd-panel">
       <div className="bd-toolbar-id">
         <strong>{project.title || 'Untitled model'}</strong>

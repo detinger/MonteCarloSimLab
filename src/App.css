@@ -29,6 +29,7 @@
 .rail {width:var(--nav-width);flex:none;display:flex;flex-direction:column;background:var(--bg-elevated);border-right:1px solid var(--border);min-height:0}
 .rail.collapsed {width:var(--nav-width-collapsed)}
 .brand {display:flex;height:56px;align-items:center;gap:10px;padding:0 17px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);font-size:17px;letter-spacing:-.6px;flex:none}
+.sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .brand-mark {display:block;width:30px;height:30px;flex:none}
 .rail nav {overflow:auto;padding:6px 11px;flex:1}
 .rail nav h2 {font-size:10px;letter-spacing:1.15px;text-transform:uppercase;color:var(--text-subtle);margin:19px 10px 6px}
@@ -61,7 +62,7 @@
 .action-primary {display:inline-flex;gap:8px;align-items:center;padding:8px 14px;border-radius:6px;background:var(--primary);color:var(--text-on-primary);text-decoration:none;font-size:13px;font-weight:600}
 .action-primary:hover {background:var(--primary-hover)}
 .home-section {margin-bottom:32px}
-.home-section-heading {font-size:14px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--text-subtle);margin:0 0 12px}
+.home-section-heading {font-size:14px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);margin:0 0 12px}
 .tool-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .tool-card {display:flex;flex-direction:column;gap:4px;padding:16px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:var(--text);transition:border-color 120ms}
 .tool-card:hover {border-color:var(--primary)}
@@ -142,7 +143,6 @@
 .skip-link:focus {top:4px}
 :is(button,input,textarea,select,a[href],summary,[role=button]):focus-visible {outline:2px solid var(--primary);outline-offset:2px}
 .screen :where(input,button,select,textarea) {font-family:inherit}
-.glass-card {min-width:0}
 .code-header {background:var(--bg-subtle)}
 .screen canvas {max-width:100%}
 @media(max-width:1100px) {.screen .grid {grid-template-columns:minmax(0,1fr)!important}}

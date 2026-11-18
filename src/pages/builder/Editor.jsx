@@ -187,7 +187,7 @@ export function SetupTable({draft, change, selected, select, add, addFormula}) {
       action={<button className="bd-add bd-add-input" disabled={draft.inputs.length >= 32} onClick={add}><Plus size={14}/> Add input</button>}>
       <div className="bd-sheet-card bd-sheet-table-wrap">
         {draft.inputs.length ? <table className="bd-sheet-table">
-          <thead><tr><th>Name</th><th>Identifier</th><th>Distribution</th><th>Parameters</th><th>Unit</th><th><span className="bd-sr">Actions</span></th></tr></thead>
+          <thead><tr><th>Name</th><th>Identifier</th><th>Distribution</th><th>Parameters</th><th>Unit</th><th><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>{draft.inputs.map(input => <tr key={input.name} className={(selected === input.name ? 'bd-row-selected ' : '') + (input.distribution === 'constant' ? 'bd-row-constant' : 'bd-row-input')} onFocus={() => select(input.name)}>
             <td><input className="bd-cell" aria-label="Display name" maxLength={80} value={input.label} onChange={e => editInput(input,{label:e.target.value})}/></td>
             <td><IdentifierInput key={input.name} name={input.name} usedNames={names.filter(n => n !== input.name)} rename={(from,to) => { change(renamePatch(draft,from,to)); select(to) }}/></td>
@@ -211,7 +211,7 @@ export function SetupTable({draft, change, selected, select, add, addFormula}) {
       action={<button className="bd-add bd-add-formula" disabled={relations.length >= 24} onClick={addFormula}><Plus size={14}/> Add formula</button>}>
       {relations.length > 0 && <div className="bd-sheet-card bd-sheet-table-wrap">
         <table className="bd-sheet-table">
-          <thead><tr><th>Name</th><th>Identifier</th><th>Expression</th><th>Unit</th><th><span className="bd-sr">Actions</span></th></tr></thead>
+          <thead><tr><th>Name</th><th>Identifier</th><th>Expression</th><th>Unit</th><th><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>{relations.map(derived => <tr key={derived.name} className={(selected === derived.name ? 'bd-row-selected ' : '') + 'bd-row-formula'} onFocus={() => select(derived.name)}>
             <td><input className="bd-cell" aria-label="Formula name" value={derived.label} onChange={e => editDerived(derived,{label:e.target.value})}/></td>
             <td><code className="bd-sheet-id">{derived.name}</code></td>

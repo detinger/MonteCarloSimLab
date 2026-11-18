@@ -37,7 +37,7 @@
 .dh-panel h2 { font-size:17px; line-height:1.3; margin:0; }
 .dh-panel h3 { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-subtle); margin:0; }
 .dh-panel p { margin:0; font-size:13px; line-height:1.55; color:var(--text-muted); }
-.dh-kicker { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); }
+.dh-kicker { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-muted); }
 .dh-tips { margin:0; padding-left:18px; font-size:13px; line-height:1.6; color:var(--text-muted); }
 .dh-panel button,.dh-panel a { font:inherit; font-size:13px; cursor:pointer; text-decoration:none; }
 .dh-primary { justify-self:start; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; color:var(--text-on-primary); background:var(--primary); border:1px solid var(--primary); border-radius:7px; font-weight:600; }

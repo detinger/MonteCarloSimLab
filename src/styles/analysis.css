@@ -25,6 +25,3 @@
 .research-panel :is(th,td) {padding:7px;border-bottom:1px solid var(--border);text-align:left}
 @media(max-width:1000px){.research-columns {grid-template-columns:minmax(0,1fr)}}
 .studio-transfer {display:grid;gap:6px;margin-top:12px}
-.help-page {max-width:880px}
-.help-page .research-panel {margin-bottom:14px}
-.help-page a {color:var(--primary)}

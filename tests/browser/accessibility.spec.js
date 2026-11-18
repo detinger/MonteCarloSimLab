@@ -5,7 +5,7 @@ for(const theme of ['light','dark']){
   test('core workspaces meet automated accessibility checks in '+theme,async({page})=>{
     test.setTimeout(120000)
     const findings=[]
-    for(const id of ['overview','builder','pi','distributions','lessons','challenges','analysis','compare','labs','inventory','experiments','exports']){
+    for(const id of ['overview','builder','industry','simchallenges','pi','inventory','distributions','helper','theory','lessons','challenges','analysis','compare','labs']){
       await page.goto('/#/'+id)
       await page.locator('.screen-'+id+' h1').waitFor()
       await page.getByLabel('Color theme').selectOption(theme)

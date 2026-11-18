@@ -146,6 +146,7 @@ export default function AdditionalLab({id}){
   const fields=[...meta.fields,{key:'samples',label:'Independent replications',step:1},{key:'seed',label:'Random seed',step:1}]
   const update=(key,value)=>setDraft(prev=>({...prev,[key]:value}))
   return <article className="extra-lab">
+    <h1 className="sr-only">{meta.title}</h1>
     <div className="extra-grid"><section className="extra-card"><h2>Experiment setup</h2>
       <fieldset disabled={active||opening}>{fields.filter(f=>id!=='coins'||p.mode!=='die'||!['tosses','p'].includes(f.key)).map(f=><label key={f.key}>{f.label}
         {f.options?<select value={draft[f.key]} onChange={e=>update(f.key,e.target.value)}>{f.options.map(v=><option key={v}>{v}</option>)}</select>:

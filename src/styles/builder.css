@@ -26,8 +26,10 @@
 .bd-toolbar .bd-params .bd-field span { white-space:nowrap; }
 .bd-toolbar .bd-params .bd-field input { width:82px; }
 .bd-toolbar .bd-toolbar-run { margin-left:auto; }
-.builder .bd-validate-ok { color:var(--success); border-color:color-mix(in srgb,var(--success) 45%,transparent); background:var(--success-soft); }
-.builder .bd-validate-warn { color:var(--error); border-color:color-mix(in srgb,var(--error) 45%,transparent); background:var(--error-soft); }
+.builder .bd-validate-ok { color:var(--text); border-color:color-mix(in srgb,var(--success) 45%,transparent); background:var(--success-soft); }
+.builder .bd-validate-ok svg { color:var(--success); }
+.builder .bd-validate-warn { color:var(--text); border-color:color-mix(in srgb,var(--error) 45%,transparent); background:var(--error-soft); }
+.builder .bd-validate-warn svg { color:var(--error); }
 .builder .bd-validate-ok:hover,.builder .bd-validate-warn:hover { filter:brightness(.97); }
 .bd-toolbar-sep { width:1px; height:26px; background:var(--border-strong); align-self:center; flex:none; margin:0 2px; }
 .bd-progress-strip { flex:none; padding:4px 16px; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--border); background:var(--bg-elevated); }
@@ -157,7 +159,6 @@
 .bd-sheet-event select { width:auto; }
 .bd-sheet-event input { width:130px; font-family:var(--font-mono); }
 .bd-field-error { color:var(--error); margin-top:3px; }
-.bd-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 /* Diagram / Table switch */
 .bd-segmented { display:inline-flex; padding:2px; gap:2px; border:1px solid var(--border-strong); border-radius:8px; background:var(--bg-subtle); }
 .builder .bd-segmented button { border:0; min-height:28px; padding:4px 10px; background:transparent; color:var(--text-muted); border-radius:6px; }

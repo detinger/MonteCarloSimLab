@@ -59,7 +59,7 @@ export default function ModelAnalysis({mode}) {
     setSelected(id);setSeed(next.seed);setSize(next.samples);setField('threshold');setValue(next.threshold)
   }
   const r=run?.result, paired=r?.paired
-  return <div className="research-page">
+  return <div className="research-page"><h1 className="sr-only">{comparing?'Compare scenarios':'Experiment analysis'}</h1>
     <div className="research-columns"><section className="research-panel"><h2>{comparing?'Baseline and alternative':'Experiment settings'}</h2><label>Model<select value={selected} onChange={e=>choose(e.target.value)}><option value="example">Project budget example</option>{records.map(r=><option key={r.id} value={r.id}>{r.project.title}</option>)}</select></label>
       <p>{project.question}</p><p><code>{base.expression}</code></p>
       <label>Replications<input value={size} onChange={e=>setSize(e.target.value)}/></label><label>Seed<input value={seed} onChange={e=>setSeed(e.target.value)}/></label>
