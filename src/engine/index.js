@@ -130,7 +130,7 @@ export function createExperiment(model) {
         event = x*x+y*y <= 1
         output = event ? 4 : 0
         if (points.length < 2048) points.push({x,y,inside:event})
-        if (trace.length < 32) inputs = {x,y}
+        if (trace.length < 500) inputs = {x,y}
       } else if (domain) {
         const row = domainReplication(config,n,paths,bands,walk)
         inputs = row.inputs
@@ -156,7 +156,7 @@ export function createExperiment(model) {
       mean += delta/n
       sumSquares += delta*(output-mean)
       if (!Number.isFinite(sumSquares)) throw Error('Variance exceeded the numeric range. Rescale model inputs.')
-      if (trace.length < 32) trace.push({index:n,inputs,output,event})
+      if (trace.length < 500) trace.push({index:n,inputs,output,event})
       if (n === 1 || n%stride === 0 || n === config.samples) convergence.push({n,mean:config.kind === 'pi' ? 4*hits/n : mean})
     }
     return n

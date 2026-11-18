@@ -1,4 +1,4 @@
-.research-page {max-width:1250px;margin:auto}
+.research-page {max-width:1250px;margin:auto;padding:20px 24px 32px}
 .research-page h1 {font-size:30px;letter-spacing:-1px;margin:0}
 .research-page h2 {font-size:18px;letter-spacing:-.4px;margin:0 0 14px}
 .research-columns {display:grid;grid-template-columns:minmax(220px,320px) minmax(0,1fr);gap:18px;align-items:start}

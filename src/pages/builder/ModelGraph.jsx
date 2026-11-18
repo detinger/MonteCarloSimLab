@@ -1,128 +1,132 @@
-import { useEffect, useRef, useState } from 'react'
-import { Activity, Binary, ChartNoAxesColumnIncreasing, Equal, Focus, FunctionSquare, GitBranch, Minus, Plus, Table2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ReactFlow, Controls, Handle, Position, MarkerType, useNodesState, useEdgesState } from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { Activity, AlertTriangle, Binary, ChartNoAxesColumnIncreasing, Check, Equal, FunctionSquare, GitBranch, LayoutGrid, Table2, AlignHorizontalJustifyStart, AlignVerticalJustifyStart } from 'lucide-react'
 import {dependencies} from './relations.js'
 import { families } from './project'
+import { SetupTree } from './Editor.jsx'
 
-const W = 174, H = 78
+const W = 184
+
 const meta = {
   input: [Activity, 'Random variable'], constant: [Equal, 'Constant'],
   formula: [FunctionSquare, 'Formula'], event: [Binary, 'Threshold event'], metric: [ChartNoAxesColumnIncreasing, 'Metric'],
 }
 
-function makeNodes(project) {
+// Node components must live outside the parent so React Flow does not remount
+// them on every render. A single component covers all six kinds.
+function RfNode({ data }) {
+  const [Icon, type] = meta[data.kind]
+  return <div className={'bd-node bd-' + data.kind + (data.grouped ? ' bd-grouped' : '')} title={data.title + ' · ' + data.value} style={{ width: W }}>
+    <Handle type="target" position={Position.Left} isConnectable={false}/>
+    <small><Icon size={13}/> {type}</small><strong>{data.title}</strong><span>{data.value}</span>
+    <Handle type="source" position={Position.Right} isConnectable={false}/>
+  </div>
+}
+const nodeTypes = { mc: RfNode }
+
+function layout(project) {
   const center = Math.max(1, project.inputs.length - 1) * 56 + 24
-  const derived=project.relations||[]
-  const offset=derived.length?216:0
+  const derived = project.relations || []
+  const offset = derived.length ? 216 : 0
   return [
-    ...project.inputs.map((v, i) => ({ id: v.name, title: v.label || v.name, kind: v.distribution === 'constant' ? 'constant' : 'input',
-      value: families[v.distribution].title + ' · ' + families[v.distribution].fields.map((_, i) => String(v['abcd'[i]]??'')).join(', '),
+    ...project.inputs.map((v, i) => ({ id: v.name, kind: v.distribution === 'constant' ? 'constant' : 'input',
+      title: v.label || v.name,
+      value: families[v.distribution].title + ' · ' + families[v.distribution].fields.map((_, i) => String(v['abcd'[i]] ?? '')).join(', '),
       x: 24, y: 24 + i * 112 })),
-    ...derived.map((v,i)=>({id:v.name,title:v.label,kind:'formula',value:v.expression,x:240,y:24+i*112})),
-    { id: 'formula', title: 'Model output', value: project.expression || 'Set a formula', kind: 'formula', x: 240+offset, y: center },
-    { id: 'event', title: 'Threshold event', value: 'Output ' + (project.comparator ?? '>') + ' ' + project.threshold + ' ' + project.unit, kind: 'event', x: 456+offset, y: center },
-    { id: 'metric', title: 'Event probability', value: '95% Wilson interval', kind: 'metric', x: 456+offset, y: center + 112 },
+    ...derived.map((v, i) => ({ id: v.name, title: v.label, kind: 'formula', value: v.expression, x: 240, y: 24 + i * 112 })),
+    { id: 'formula', title: 'Model output', value: project.expression || 'Set a formula', kind: 'formula', x: 240 + offset, y: center },
+    { id: 'event', title: 'Threshold event', value: 'Output ' + (project.comparator ?? '>') + ' ' + project.threshold + ' ' + project.unit, kind: 'event', x: 456 + offset, y: center },
+    { id: 'metric', title: 'Event probability', value: '95% Wilson interval', kind: 'metric', x: 672 + offset, y: center },
   ].map(n => ({ ...n, ...project.positions[n.id] }))
 }
 
-export default function ModelGraph({ project, selected, select, move, arrange, add, addFormula, tidy, duplicate }) {
-  const [table, setTable] = useState(false)
-  const [zoom, setZoom] = useState(null)
-  const [width, setWidth] = useState(600)
-  const [group,setGroup]=useState([])
-  const [snap,setSnap]=useState(true)
-  const [grid,setGrid]=useState(true)
-  const clipboard=useRef(null)
-  const pan=useRef(null)
-  const viewport = useRef(null)
-  const drag = useRef(null)
-  const [moving, setMoving] = useState(null)
-  useEffect(() => {
-    const root = viewport.current
-    if (!root) return
-    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
-    observer.observe(root)
-    return () => observer.disconnect()
-  }, [table])
-  const nodes = makeNodes(project).map(n => moving?.id === n.id ? { ...n, ...moving } : n)
-  const boardWidth = Math.max(...nodes.map(n => n.x)) + W + 24
-  const boardHeight = Math.max(...nodes.map(n => n.y)) + H + 24
-  const scale = zoom ?? Math.max(0.68, Math.min(1, width / boardWidth))
-  const names=[...project.inputs,...(project.relations||[])].map(v=>v.name)
-  const edges=[
-    ...[...(project.relations||[]),{name:'formula',expression:project.expression}].flatMap(node=>
-      dependencies(node.expression,names).map(source=>[source,node.name])),
-    ['formula','event'],['event','metric'],
+function buildEdges(project) {
+  const names = [...project.inputs, ...(project.relations || [])].map(v => v.name)
+  const pairs = [
+    ...[...(project.relations || []), { name: 'formula', expression: project.expression }].flatMap(node =>
+      dependencies(node.expression, names).map(source => [source, node.name])),
+    ['formula', 'event'], ['event', 'metric'],
   ]
-  function release() {
-    if (moving) move(moving.id, { x: moving.x, y: moving.y })
-    drag.current = null
-    setMoving(null)
-  }
+  return pairs.map(([source, target]) => ({ id: source + '->' + target, source, target, type: 'default',
+    selectable: false, focusable: false, markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 } }))
+}
+
+function toRfNodes(project, selected, group) {
+  return layout(project).map(n => ({ id: n.id, type: 'mc', position: { x: n.x, y: n.y },
+    selected: n.id === selected, data: { kind: n.kind, title: n.title, value: n.value, grouped: group.includes(n.id) } }))
+}
+
+export default function ModelGraph({ project, selected, select, move, arrange, add, addFormula, tidy, duplicate, remove, edit, editNode, issues = [] }) {
+  const [table, setTable] = useState(false)
+  const [group, setGroup] = useState([])
+  const [nodes, setNodes, onNodesChange] = useNodesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const clipboard = useRef(null)
+  const relCount = project.relations?.length || 0
+  const edgeCount = buildEdges(project).length
+
+  // Rebuild the diagram whenever the model structure, selection or grouping
+  // changes. Positions committed on drag flow back through project.positions,
+  // so rebuilding never jumps a node from where the user dropped it.
+  useEffect(() => { setNodes(toRfNodes(project, selected, group)) }, [project, selected, group, setNodes])
+  useEffect(() => { setEdges(buildEdges(project)) }, [project, setEdges])
+
+  const onNodeClick = useCallback((e, node) => {
+    if (e.shiftKey) setGroup(g => g.includes(node.id) ? g.filter(v => v !== node.id) : [...g, node.id])
+    else { setGroup([]); editNode(node.id) }
+  }, [editNode])
+
+  const onNodeDragStop = useCallback((e, node) => {
+    move(node.id, { x: Math.round(node.position.x), y: Math.round(node.position.y) })
+  }, [move])
+
   function groupAlign(axis) {
-    const picked=nodes.filter(v=>group.includes(v.id))
-    if(picked.length<2)return
-    const position=Math.min(...picked.map(v=>v[axis]))
-    arrange({...project.positions,...Object.fromEntries(picked.map(v=>[v.id,{x:v.x,y:v.y,[axis]:position}]))})
+    const picked = tableNodes.filter(v => group.includes(v.id))
+    if (picked.length < 2) return
+    const position = Math.min(...picked.map(v => v[axis]))
+    arrange({ ...project.positions, ...Object.fromEntries(picked.map(v => [v.id, { x: v.x, y: v.y, [axis]: position }])) })
   }
-  return <section className="bd-panel bd-graph" onKeyDown={e=>{
-    if(!(e.ctrlKey||e.metaKey)||!e.target.closest('.bd-viewport')) return
-    const node=[...project.inputs,...(project.relations||[])].find(n=>n.name===selected)
-    const key=e.key.toLowerCase()
-    if(key==='c' && node){e.preventDefault();clipboard.current=node}
-    if(key==='v' && clipboard.current){e.preventDefault();duplicate(clipboard.current)}
-    if(key==='d' && node){e.preventDefault();duplicate(node)}
-  }}>
+
+  function onKeyDown(e) {
+    const node = [...project.inputs, ...(project.relations || [])].find(n => n.name === selected)
+    if (!e.target.closest('input,textarea,select,[contenteditable="true"]') && (e.key === 'Delete' || e.key === 'Backspace') && node) {
+      e.preventDefault(); remove(node); return
+    }
+    if (!(e.ctrlKey || e.metaKey)) return
+    const key = e.key.toLowerCase()
+    if (key === 'c' && node) { e.preventDefault(); clipboard.current = node }
+    if (key === 'v' && clipboard.current) { e.preventDefault(); duplicate(clipboard.current) }
+    if (key === 'd' && node) { e.preventDefault(); duplicate(node) }
+  }
+
+  return <section className="bd-panel bd-graph" onKeyDown={onKeyDown}>
     <header className="bd-panel-head"><h2><GitBranch size={17}/> Model structure</h2>
-      <button type="button" onClick={() => setTable(!table)}>{table ? <GitBranch size={14}/> : <Table2 size={14}/>} {table ? 'Diagram' : 'Table'}</button>
-    </header>
-    {table ? <div className="bd-table-wrap"><table><thead><tr><th>Node</th><th>Kind</th><th>Definition</th></tr></thead>
-      <tbody>{nodes.map(n => <tr key={n.id}><td><button onClick={() => select(n.id)} aria-pressed={selected === n.id}>{n.title}</button></td><td>{meta[n.kind][1]}</td><td>{n.value}</td></tr>)}</tbody>
-    </table></div> : <div className={'bd-viewport'+(grid?'':' bd-plain')} ref={viewport} tabIndex="0"
-      onPointerDown={e=>{if(e.target.closest('button') || e.pointerType==='touch' || e.button!==0)return
-        pan.current={x:e.clientX,y:e.clientY,left:e.currentTarget.scrollLeft,top:e.currentTarget.scrollTop}
-        e.currentTarget.setPointerCapture(e.pointerId)}}
-      onPointerMove={e=>{if(pan.current)e.currentTarget.scrollTo(pan.current.left+pan.current.x-e.clientX,pan.current.top+pan.current.y-e.clientY)}}
-      onPointerUp={()=>{pan.current=null}} onPointerCancel={()=>{pan.current=null}} aria-label="Model diagram. Select a node to edit. Arrow keys move the selected node.">
-      <div style={{ width: boardWidth * scale, height: boardHeight * scale }}>
-        <div className="bd-board" style={{ width: boardWidth, height: boardHeight, transform: 'scale(' + scale + ')' }}>
-          <svg width={boardWidth} height={boardHeight} aria-hidden="true">
-            {edges.map(([from,to]) => {
-              const a = nodes.find(n => n.id === from), b = nodes.find(n => n.id === to)
-              if (from === 'event') return <path key={from+'-'+to} d={`M ${a.x+W/2} ${a.y+H} L ${b.x+W/2} ${b.y}`}/>
-              const start = a.x + W, end = b.x, mid = (start + end)/2, y = a.y + H/2, y2 = b.y + H/2
-              return <path key={from+'-'+to} d={`M ${start} ${y} C ${mid} ${y} ${mid} ${y2} ${end} ${y2}`}/>
-            })}
-          </svg>
-          {nodes.map(n => {
-            const [Icon, type] = meta[n.kind]
-            return <button type="button" key={n.id} className={'bd-node bd-' + n.kind + (group.includes(n.id)?' bd-grouped':'')} title={n.title + ' · ' + n.value}
-              aria-pressed={selected === n.id} style={{ left:n.x, top:n.y, width:W, height:H }}
-              onClick={e=>{if(e.shiftKey)setGroup(g=>g.includes(n.id)?g.filter(v=>v!==n.id):[...g,n.id])
-                else setGroup([]);select(n.id)}} onKeyDown={e => {
-                const delta = { ArrowLeft: [-16,0], ArrowRight: [16,0], ArrowDown: [0,16], ArrowUp: [0,-16] }[e.key]
-                if (delta) { e.preventDefault(); move(n.id, {x: Math.max(0,n.x+delta[0]), y: Math.max(0,n.y+delta[1])}) }
-              }}
-              onPointerDown={e => { if (e.button !== 0) return; drag.current = {id:n.id,x:e.clientX,y:e.clientY,startX:n.x,startY:n.y,scale}; e.currentTarget.setPointerCapture(e.pointerId) }}
-              onPointerMove={e => {
-                const s = drag.current
-                if (s?.id !== n.id || Math.abs(e.clientX-s.x)+Math.abs(e.clientY-s.y)<6) return
-                const coordinate=value=>Math.max(0,snap&&!e.altKey?Math.round(value/16)*16:value)
-                setMoving({id:n.id,x:coordinate(s.startX+(e.clientX-s.x)/s.scale),y:coordinate(s.startY+(e.clientY-s.y)/s.scale)})
-              }} onPointerUp={release} onPointerCancel={() => {drag.current=null; setMoving(null)}}>
-              <small><Icon size={13}/> {type}</small><strong>{n.title}</strong><span>{n.value}</span>
-            </button>
-          })}
-        </div>
+      <div className="bd-tools">
+        <button className="bd-add bd-add-input" onClick={add} disabled={project.inputs.length >= 32} title="Add a random variable — an uncertain input drawn from a distribution each replication"><Activity size={14}/> Add input</button>
+        <button className="bd-add bd-add-formula" disabled={project.relations?.length >= 24} onClick={addFormula} title="Add an intermediate formula that combines inputs into a named value"><FunctionSquare size={14}/> Add formula</button>
+        <button className="bd-add bd-add-tidy" onClick={tidy} disabled={table} title="Reset every node to the automatic left-to-right layout"><LayoutGrid size={14}/> Tidy layout</button>
+        <div className="bd-toolbar-sep"/>
+        {group.length >= 2 && !table && <>
+          <button type="button" onClick={() => groupAlign('x')} title="Align selected nodes to the left"><AlignHorizontalJustifyStart size={14}/> Align X</button>
+          <button type="button" onClick={() => groupAlign('y')} title="Align selected nodes to the top"><AlignVerticalJustifyStart size={14}/> Align Y</button>
+        </>}
+        <button type="button" onClick={() => setTable(!table)}>{table ? <GitBranch size={14}/> : <Table2 size={14}/>} {table ? 'Diagram' : 'Setup'}</button>
       </div>
+    </header>
+    {table ? <div className="bd-setup-wrap"><SetupTree draft={project} change={edit} select={select}/></div> : <div className="bd-rf" aria-label="Model diagram. Click a node to edit it. Shift-click to group nodes.">
+      <div className="bd-canvas-hint">Click a node to edit · drag to move · shift-click to group · Backspace to delete</div>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+        onNodeClick={onNodeClick} onNodeDragStop={onNodeDragStop}
+        nodesConnectable={false} edgesFocusable={false} deleteKeyCode={null} proOptions={{ hideAttribution: true }}
+        fitView fitViewOptions={{ padding: 0.2, maxZoom: 1 }} minZoom={0.3} maxZoom={2}>
+        <Controls showInteractive={false}/>
+      </ReactFlow>
     </div>}
-    <footer className="bd-graph-tools"><div className="bd-tools"><button onClick={add} disabled={project.inputs.length >= 32}><Plus size={15}/> Add input</button><button disabled={project.relations?.length>=24} onClick={addFormula}><Plus size={15}/> Add formula</button><button onClick={tidy}>Tidy layout</button></div>
-      {!table && <div className="bd-tools"><button aria-label="Zoom out" onClick={() => setZoom(Math.max(.5,scale-.15))}><Minus size={14}/></button>
-        <span>{Math.round(scale*100)}%</span><button aria-label="Zoom in" onClick={() => setZoom(Math.min(2,scale+.15))}><Plus size={14}/></button>
-        <button aria-label="Fit diagram" onClick={() => {setZoom(null); viewport.current?.scrollTo(0,0)}}><Focus size={15}/></button></div>}</footer>
-    {!table && <details className="bd-canvas-options"><summary>Canvas tools</summary><div className="bd-tools">
-      <button onClick={()=>setSnap(!snap)} aria-pressed={snap}>Snap to grid</button><button onClick={()=>setGrid(!grid)} aria-pressed={grid}>Show grid</button>
-      <button disabled={group.length<2} onClick={()=>groupAlign('x')}>Align left</button><button disabled={group.length<2} onClick={()=>groupAlign('y')}>Align tops</button>
-      <button onClick={()=>setGroup(group.length===nodes.length?[]:nodes.map(n=>n.id))}>{group.length===nodes.length?'Clear selection':'Select all'}</button></div>
-      <p className="bd-hint">Shift-click to select several nodes. Drag the background to pan. Ctrl/Cmd+C copies a selected input or formula; Ctrl/Cmd+V pastes a duplicate.</p></details>}
+    <footer className="bd-graph-status">
+      <span>{project.inputs.length} input{project.inputs.length === 1 ? '' : 's'} · {relCount} formula{relCount === 1 ? '' : 's'} · {edgeCount} link{edgeCount === 1 ? '' : 's'}</span>
+      <span className={issues.length ? 'bd-status-warn' : 'bd-status-ok'}>{issues.length ? <><AlertTriangle size={13}/> {issues.length} issue{issues.length === 1 ? '' : 's'}</> : <><Check size={13}/> Valid</>}</span>
+    </footer>
   </section>
 }

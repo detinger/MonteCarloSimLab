@@ -119,7 +119,7 @@ export function checkRun(run) {
       !r || !['complete','cancelled','failed'].includes(r.status) || !bounded(r.n,model.samples) ||
       (r.status === 'complete' && r.n !== model.samples) || !bounded(r.hits,r.n) ||
       ![r.mean,r.probability,r.sd,r.se].every(finite) || ![r.meanCI,r.probabilityCI].every(interval) ||
-      !Array.isArray(r.trace) || r.trace.length > 32 || !Array.isArray(r.convergence) || r.convergence.length > 132 ||
+      !Array.isArray(r.trace) || r.trace.length > 500 || !Array.isArray(r.convergence) || r.convergence.length > 132 ||
       model.inputs.some(v => typeof v.label !== 'string') ||
       r.trace.some(t => !t || !bounded(t.index,r.n) || !Number.isFinite(t.output) || typeof t.event !== 'boolean' ||
         !t.inputs || model.inputs.some(i => !Number.isFinite(t.inputs[i.name]))) ||
@@ -129,6 +129,7 @@ export function checkRun(run) {
 }
 
 let opening
+export function resetDatabase() { opening = null }
 function database() {
   if (!opening) opening = new Promise((resolve, reject) => {
     const request = indexedDB.open('mc-builder-projects', 1)

@@ -12,6 +12,7 @@
     "test:browser": "playwright test"
   },
   "dependencies": {
+    "@xyflow/react": "^13.0.2",
     "classnames": "^2.5.1",
     "fflate": "^0.8.2",
     "jstat": "^1.9.6",

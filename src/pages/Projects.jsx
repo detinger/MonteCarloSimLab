@@ -18,7 +18,7 @@ export default function Projects(){
     window.dispatchEvent(new CustomEvent('mc-builder-open',{detail:id}))
     window.location.assign('#/builder')
   }
-  return <div className="research-page"><h1>Saved projects</h1><p className="intro">Open a local Builder model or download its project file to move it to another browser.</p><section className="research-panel">
+  return <div className="research-page"><section className="research-panel">
     {error?<p role="alert">{error}</p>:projects===null?<p>Opening local projects…</p>:projects.length?<div className="scroll-table"><table><thead><tr><th>Project</th><th>Last saved</th><th>Run</th><th>Actions</th></tr></thead><tbody>{projects.map(p=><tr key={p.id}><td><b>{p.project.title}</b><br/>{p.project.question}</td><td>{new Date(p.updatedAt).toLocaleString()}</td><td>{p.run?p.run.result.n.toLocaleString()+' replications · seed '+p.run.model.seed:'Draft'}</td><td><button onClick={()=>open(p.id)}>Open</button> <button onClick={()=>download('simulation-project.json',JSON.stringify({schemaVersion:1,project:p.project,run:p.run},null,2))}>Download</button></td></tr>)}</tbody></table></div>:<><FolderOpen/><h2>No saved projects yet</h2><p>Create a Builder model to save a question and its experiment settings here.</p></>}
     <a className="action-primary" href="#/builder">Open Builder <ArrowRight size={16}/></a></section></div>
 }

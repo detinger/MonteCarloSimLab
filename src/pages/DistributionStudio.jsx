@@ -39,7 +39,7 @@ export default function DistributionStudio() {
     } catch {setTransferMessage('Browser session storage is unavailable. Download the definition to keep these parameters.')}
   }
   const stale=result&&(result.kind!==kind||JSON.stringify(fields)!==JSON.stringify(result.fields)||result.seed!==+seed||result.n!==+n)
-  return <div className="research-page"><h1>Distribution Studio</h1><p className="intro">Explore how an input distribution shapes the values a simulation can draw.</p><div className="research-columns"><section className="research-panel"><h2>Distribution parameters</h2>
+  return <div className="research-page"><div className="research-columns"><section className="research-panel"><h2>Distribution parameters</h2>
     <label>Distribution<select value={kind} onChange={e=>{setKind(e.target.value);setFields(distributions[e.target.value][2].map(String));setError('')}}>{Object.entries(distributions).map(([k,[title]])=><option key={k} value={k}>{title}</option>)}</select></label>
     {fields.map((v,i)=><label key={i}>{distributions[kind][1][i]}<input value={v} onChange={e=>setFields(fields.map((old,j)=>j===i?e.target.value:old))}/></label>)}
     <label>Preview draws<input value={n} onChange={e=>setN(e.target.value)}/></label><label>Seed<input value={seed} onChange={e=>setSeed(e.target.value)}/></label>

@@ -38,6 +38,7 @@
   --warning-soft: #fdf3dc;
   --recommendation: #2b6cb0;
   --recommendation-soft: #e6f0fa;
+  --mc-event: #7c5cbf;
   --info: #5a6779;
   --info-soft: #eef1f5;
   --success: #2f855a;
@@ -95,6 +96,7 @@
   --warning-soft: #3a2d14;
   --recommendation: #79b2ec;
   --recommendation-soft: #172a40;
+  --mc-event: #b79ce0;
   --info: #a3afbf;
   --info-soft: #1f2833;
   --success: #6fcf97;
@@ -142,6 +144,7 @@
     --warning-soft: #3a2d14;
     --recommendation: #79b2ec;
     --recommendation-soft: #172a40;
+  --mc-event: #b79ce0;
     --info: #a3afbf;
     --info-soft: #1f2833;
     --success: #6fcf97;

@@ -1,6 +1,6 @@
 import {inputLaw,slotKeys,typedSlot} from '../engine/inputLaws.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CheckCheck, Copy, Download, FolderOpen, Pause, Play, Plus, Redo2, Save, Square, Undo2, Upload } from 'lucide-react'
+import { CheckCheck, Cloud, Download, FolderOpen, Pause, Play, Plus, Redo2, Square, Undo2, Upload } from 'lucide-react'
 import { ENGINE_VERSION } from '../engine/index.js'
 import { startRun } from '../engine/client.js'
 import { notebook, pythonScript, rScript } from '../engine/export.js'
@@ -8,8 +8,7 @@ import { checkProject, checkRun, compile, createProject, download, families, iss
 import {downloadRunBundle} from '../components/runBundle.js'
 import {convergenceSvg,traceCsv} from './builder/chart.js'
 import ModelGraph from './builder/ModelGraph.jsx'
-import { Dialog, Inspector, Issues, Settings, Wizard } from './builder/Editor.jsx'
-import Results from './builder/Results.jsx'
+import { Dialog, ExportPanel, Issues, NodeEditor, nodeTitle, ResultsPanel, Settings, Wizard } from './builder/Editor.jsx'
 import '../styles/builder.css'
 
 function visibleStamp(record) {
@@ -33,8 +32,11 @@ export default function Builder() {
   const [message,setMessage] = useState('')
   const [savedAt,setSavedAt] = useState('')
   const [saveState,setSaveState] = useState('Opening')
-  const [history,setHistory] = useState({past:[],future:[]})
   const [status,setStatus] = useState('ready')
+  const [history,setHistory] = useState({past:[],future:[]})
+  const [resultsOpen,setResultsOpen] = useState(true)
+  const [resultsHeight,setResultsHeight] = useState(280)
+  const resultsResize = useRef(null)
   const revision = useRef(new Map())
   const queue = useRef(Promise.resolve())
   const stored = useRef(new Map())
@@ -109,6 +111,12 @@ export default function Builder() {
     setHistory(h => ({past:[...h.past.slice(-69),project],future:[]}))
     setProject({...project,...patch});setSaveState('Edited')
   },[project])
+  function undo(redo) {
+    const source = redo ? history.future : history.past
+    if (!source.length) return
+    setHistory(redo ? {past:[...history.past,project],future:source.slice(0,-1)} : {past:source.slice(0,-1),future:[...history.future,project]})
+    setProject(source.at(-1));setSaveState('Edited')
+  }
   useEffect(()=>{
     if(!ready)return
     function receive(event) {
@@ -136,12 +144,6 @@ export default function Builder() {
     window.addEventListener('mc-studio-input',receive)
     return ()=>window.removeEventListener('mc-studio-input',receive)
   },[ready,project,edit])
-  function undo(redo) {
-    const source = redo ? history.future : history.past
-    if (!source.length) return
-    setHistory(redo ? {past:[...history.past,project],future:source.slice(0,-1)} : {past:source.slice(0,-1),future:[...history.future,project]})
-    setProject(source.at(-1));setSaveState('Edited')
-  }
   const issues = issuesFor(project)
   const model = compile(project)
   async function replace(p,r=null,recoverCopy=false) {
@@ -195,17 +197,46 @@ export default function Builder() {
     } catch(e){setMessage(e.message)}
   }
   const stale = run && JSON.stringify(run.model)!==JSON.stringify(model)
+  function startResultsResize(e) {
+    if (e.button !== 0) return
+    resultsResize.current = {startY:e.clientY, startH:resultsHeight}
+    e.currentTarget.setPointerCapture(e.pointerId)
+    e.preventDefault()
+  }
+  function doResultsResize(e) {
+    if (!resultsResize.current) return
+    const next = resultsResize.current.startH + (resultsResize.current.startY - e.clientY)
+    setResultsHeight(Math.max(120, Math.min(window.innerHeight * 0.7, next)))
+  }
+  function endResultsResize() { resultsResize.current = null }
   return <article className="builder">
-    <header className="bd-title"><div><h1>Simulation Builder</h1><p>Model a question, test your assumptions and measure uncertainty.</p></div>
-      <div className="bd-tools"><button disabled={!ready || working} onClick={openProjects}><FolderOpen size={15}/> Open</button><button disabled={!ready || working} onClick={() => setDialog('new')}><Plus size={15}/> New model</button></div></header>
-    <section className="bd-project bd-panel"><div><h2>{project.title || 'Untitled model'}</h2><p>{project.question || 'Add a decision question in Project settings.'}</p>
-      <small role="status">{saveState}{saveState==='Saved' && savedAt ? ' locally · '+new Date(savedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''}</small></div>
-      <div className="bd-tools"><button disabled={!ready || working} aria-label="Save project" title="Save project" onClick={() => save(project,run).catch(() => {})}><Save size={15}/></button>
-        <button disabled={!history.past.length} aria-label="Undo" onClick={() => undo(false)}><Undo2 size={15}/></button>
-        <button disabled={!history.future.length} aria-label="Redo" onClick={() => undo(true)}><Redo2 size={15}/></button>
-        <button disabled={!ready || working} aria-label="Duplicate model" onClick={() => replace({...project,id:crypto.randomUUID(),title:project.title+' copy'},run,true)}><Copy size={15}/></button>
-        <button onClick={() => setDialog('export')}><Download size={15}/> Export</button></div></section>
-    {message && <p className="bd-alert" role="status">{message} <button onClick={() => setMessage('')}>Dismiss</button></p>}
+    <section className="bd-toolbar bd-panel">
+      <div className="bd-toolbar-id">
+        <strong>{project.title || 'Untitled model'}</strong>
+        <small role="status"><Cloud size={12}/> {saveState==='Saved' ? 'Saved on this device' : saveState}</small>
+      </div>
+      <div className="bd-tools">
+        <button disabled={!ready || working} onClick={openProjects}><FolderOpen size={15}/> Open</button>
+        <button disabled={!ready || working} onClick={() => setDialog('new')}><Plus size={15}/> New</button>
+        <button disabled={!ready || working} onClick={() => fileInput.current.click()}><Upload size={15}/> Import</button>
+        <button disabled={!ready || working} onClick={() => setDialog('export')}><Download size={15}/> Export</button>
+      </div>
+      <div className="bd-toolbar-sep"/>
+      <div className="bd-tools">
+        <button disabled={!history.past.length} aria-label="Undo" title="Undo" onClick={() => undo(false)}><Undo2 size={15}/></button>
+        <button disabled={!history.future.length} aria-label="Redo" title="Redo" onClick={() => undo(true)}><Redo2 size={15}/></button>
+      </div>
+      <div className="bd-toolbar-sep"/>
+      <Settings draft={project} change={edit}/>
+      <div className="bd-tools bd-toolbar-run">
+        <button onClick={() => setDialog('validate')}><CheckCheck size={15}/> Validate{issues.length ? ' ('+issues.length+')' : ''}</button>
+        {working ? <><button onClick={() => status==='paused' ? job.current?.resume() : job.current?.pause()}>{status==='paused' ? <Play size={15}/> : <Pause size={15}/>} {status==='paused' ? 'Resume' : 'Pause'}</button><button onClick={() => job.current?.cancel()}><Square size={14}/> Cancel</button></> :
+        <button className="bd-primary" disabled={!ready || !!issues.length} onClick={start}><Play size={14}/> Run simulation</button>}
+      </div>
+    </section>
+    {working && <div className="bd-progress-strip"><label>{status==='paused'?'Paused':'Running'} · {run?.result.n ?? 0} / {run?.model.samples ?? model.samples}</label><progress value={run?.result.n ?? 0} max={run?.model.samples ?? model.samples}/></div>}
+    {issues.length>0 && !working && <p className="bd-alert bd-alert-strip">{issues[0]}</p>}
+    {message && <p className="bd-alert bd-alert-strip" role="status">{message} <button onClick={() => setMessage('')}>Dismiss</button></p>}
     <div className="bd-workspace"><ModelGraph project={project} selected={selected} select={select} move={(id,p) => edit({positions:{...project.positions,[id]:p}})} arrange={positions=>edit({positions})} duplicate={source=>{
       if(source.distribution && project.inputs.length<32) {
         const copy={...source,name:newInput([...project.inputs,...(project.relations||[])]).name,label:source.label+' copy'}
@@ -214,26 +245,19 @@ export default function Builder() {
         const copy={...source,name:newRelation(project).name,label:source.label+' copy'}
         edit({relations:[...(project.relations||[]),copy]});select(copy.name)
       }
-    }} tidy={()=>edit({positions:{}})} addFormula={()=>{const v=newRelation(project);edit({relations:[...(project.relations||[]),v]});select(v.name)}} add={() => {
+    }} remove={node=>{
+      if(node.distribution) edit({inputs:project.inputs.filter(v=>v!==node)})
+      else edit({relations:(project.relations||[]).filter(v=>v!==node)})
+      select('formula')
+    }} edit={edit} editNode={id=>{select(id);setDialog('node')}} issues={issues} tidy={()=>edit({positions:{}})} addFormula={()=>{const v=newRelation(project);edit({relations:[...(project.relations||[]),v]});select(v.name)}} add={() => {
       const v=newInput([...project.inputs,...(project.relations||[])],project.unit);edit({inputs:[...project.inputs,v]});select(v.name)
-    }}/>
-      <Inspector key={selected} draft={project} selected={selected} select={select} change={edit} issues={issues} run={run}/></div>
-    <section className="bd-run bd-panel"><Settings draft={project} change={edit}/><div className="bd-tools">
-      <button onClick={() => setDialog('validate')}><CheckCheck size={15}/> Validate{issues.length ? ' ('+issues.length+')' : ''}</button>
-      {working ? <><button onClick={() => status==='paused' ? job.current?.resume() : job.current?.pause()}>{status==='paused' ? <Play size={15}/> : <Pause size={15}/>} {status==='paused' ? 'Resume' : 'Pause'}</button><button onClick={() => job.current?.cancel()}><Square size={14}/> Cancel</button></> :
-      <button className="bd-primary" disabled={!ready || !!issues.length} onClick={start}><Play size={14}/> Run simulation</button>}</div>
-      {issues.length>0 && <p className="bd-alert">{issues[0]}</p>}
-      {working && <div className="bd-progress"><label>{status==='paused'?'Paused':'Running'} · {run?.result.n ?? 0} / {run?.model.samples ?? model.samples}<progress value={run?.result.n ?? 0} max={run?.model.samples ?? model.samples}/></label></div>}</section>
-    <Results run={run} stale={stale}/>
+    }}/></div>
+    <ResultsPanel run={run} stale={stale} open={resultsOpen} onToggle={() => setResultsOpen(v => !v)} height={resultsHeight} onResizeStart={startResultsResize} onResizeMove={doResultsResize} onResizeEnd={endResultsResize}/>
     <input type="file" accept=".json,application/json" ref={fileInput} hidden onChange={importFile}/>
     {dialog==='new' && <Wizard close={() => setDialog('')} finish={replace}/>}
+    {dialog==='node' && <Dialog title={nodeTitle(project, selected)} close={() => setDialog('')}><NodeEditor draft={project} selected={selected} change={edit} select={select} close={() => setDialog('')}/></Dialog>}
+    {dialog==='export' && <Dialog title="Export" close={() => setDialog('')}><ExportPanel run={run} issues={issues} exportFile={exportFile} working={working}/></Dialog>}
     {dialog==='validate' && <Dialog title="Model validation" close={() => setDialog('')}><Issues issues={issues}/></Dialog>}
-    {dialog==='open' && <Dialog title="Open project" close={() => setDialog('')}><div className="bd-project-list">{catalog.map(r => <button key={r.id} onClick={() => {try{load(r)}catch(e){setMessage(e.message);setDialog('')}}}><strong>{r.project.title || 'Untitled model'}</strong><small>{r.project.question}</small></button>)}</div>
-      <button onClick={() => fileInput.current.click()}><Upload size={14}/> Import project JSON</button></Dialog>}
-    {dialog==='export' && <Dialog title="Export model" close={() => setDialog('')}><p>Download the current settings and assumptions. Open the notebook in Jupyter or upload it using Colab’s File menu.</p>
-      <div className="bd-project-list">{[['notebook','Google Colab notebook (.ipynb)'],['python','Python script (.py)'],['r','R script (.R)'],['project','Project and run (.json)'],['csv','Captured replications (.csv)'],['chart','Convergence plot (.svg)'],['zip','Reproducible run bundle (.zip)']].map(([id,title]) =>
-        <button key={id} disabled={['csv','chart','zip'].includes(id) ? !run?.result.n || working : id==='project' ? working : !!issues.length} onClick={() => exportFile(id)}><Download size={15}/>{title}</button>)}</div>
-      {run && <p className="bd-hint">CSV, chart and ZIP use the recorded run at seed {run.model.seed}, with {run.result.n} completed replications.</p>}
-      {!!issues.length && <Issues issues={issues}/>}</Dialog>}
+    {dialog==='open' && <Dialog title="Open project" close={() => setDialog('')}><div className="bd-project-list">{catalog.map(r => <button key={r.id} onClick={() => {try{load(r)}catch(e){setMessage(e.message);setDialog('')}}}><strong>{r.project.title || 'Untitled model'}</strong><small>{r.project.question}</small></button>)}</div></Dialog>}
   </article>
 }

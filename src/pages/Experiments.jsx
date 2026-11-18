@@ -46,7 +46,7 @@ export default function Experiments(){
       },e=>finish('failed',e))
     }catch(error){finish('failed',error.message)}
   }
-  return <article className="research-page runner-page"><header><h1>Experiment Runner</h1><p className="intro">Run a model with a recorded seed and replication count. Reopen a job to reproduce its results.</p></header>
+  return <article className="research-page runner-page">
     {warnings.map(w=><p role="status" key={w}>{w}</p>)}
     <div className="research-columns"><section className="research-panel"><h2>Run configuration</h2>
       <SourcePicker entries={entries} value={source.id} disabled={active} onChange={choose}/>

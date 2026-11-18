@@ -31,7 +31,7 @@ test('pi replays independently of execution batch size and plot limits',() => {
   assert.ok(result.points.every(({x,y,inside}) => inside === (x*x+y*y <= 1)))
   const big = run({...pi,samples:100000})
   assert.equal(big.points.length,2048)
-  assert.equal(big.trace.length,32)
+  assert.equal(big.trace.length,500)
   assert.ok(big.convergence.length <= 130)
   assert.ok(Math.abs(big.mean-Math.PI) < 0.03)
 })

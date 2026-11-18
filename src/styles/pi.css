@@ -6,6 +6,7 @@
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+
 .pi-page h1, .pi-page h2, .pi-page h3, .pi-page p, .pi-page figure, .pi-page dl { margin: 0; }
 .pi-page h1 { font-size: 1.75rem; letter-spacing: -.025em; }
 .pi-page h2 { font-size: 1.12rem; }
