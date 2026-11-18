@@ -627,13 +627,13 @@ Generate valid **Jupyter Notebook Format 4** JSON with `nbformat: 4`, suitable `
 
 ### 11.4 Notebook acceptance matrix
 
-- [ ] All 12 exported notebooks pass `nbformat.validate` and syntax compilation.
-- [ ] Automated headless execution (`nbclient` or `nbconvert --execute`) completes offline/on CI for fixtures without interactive authorization, using installed dependencies.
-- [ ] 12 examples produce same named metrics, parameter values, units and model assumptions as the browser and pass statistical/reference tolerances (not unjustified per-draw equality).
-- [ ] Custom Builder model with 3 RVs, formula and probability threshold exports and executes end-to-end with correct tables and plots.
-- [ ] Seed, RNG/version, sample count and model version appear in notebook output and manifest; tests detect mismatch to project.
-- [ ] Labels containing quotes, backticks, Unicode, mathematical symbols, HTML and spreadsheet formula prefixes cannot break code or inject execution.
-- [ ] No export accesses the network except explicit package installation in notebook runtime; standalone file generation itself is entirely in-browser.
+- [x] All 12 exported notebooks pass `nbformat.validate` and syntax compilation.
+- [x] Automated headless execution (`nbclient` or `nbconvert --execute`) completes offline/on CI for fixtures without interactive authorization, using installed dependencies.
+- [x] 12 examples produce same named metrics, parameter values, units and model assumptions as the browser and pass statistical/reference tolerances (not unjustified per-draw equality).
+- [x] Custom Builder model with 3 RVs, formula and probability threshold exports and executes end-to-end with correct tables and plots.
+- [x] Seed, RNG/version, sample count and model version appear in notebook output and manifest; tests detect mismatch to project.
+- [x] Labels containing quotes, backticks, Unicode, mathematical symbols, HTML and spreadsheet formula prefixes cannot break code or inject execution.
+- [x] No export accesses the network except explicit package installation in notebook runtime; standalone file generation itself is entirely in-browser.
 
 ## 12. Python, R, data, images and reproducible run bundles
 
@@ -734,37 +734,37 @@ Add a short `docs/deployment/netlify.md` and `docs/deployment/railway.md` with e
 
 ### Phase 0 — Audit and scientific regression baseline (P0)
 
-- [ ] Inspect repo, package manager, source, current seven modules, current behavior, exports, deploy files, license and data persistence.
-- [ ] Record current status for preservation B01–B13 with screenshots/fixture inputs and known numerical errors.
-- [ ] Add baseline Vitest/Playwright (or equivalent) scripts, CI build, calculation fixtures and documented project architecture.
-- [ ] Document model node contract, RNG selection/test vectors, statistical method conventions and codegen IR in ADRs.
+- [x] Inspect repo, package manager, source, current seven modules, current behavior, exports, deploy files, license and data persistence.
+- [x] Record current status for preservation B01–B13 with screenshots/fixture inputs and known numerical errors.
+- [x] Add baseline Vitest/Playwright (or equivalent) scripts, CI build, calculation fixtures and documented project architecture.
+- [x] Document model node contract, RNG selection/test vectors, statistical method conventions and codegen IR in ADRs.
 
 **Exit:** all original seven preserved or baseline issues documented; build/test reproducible; first vertical slice passes.
 
 ### Phase 1 — Core design + Simulation Builder vertical slice (P1 release blocker)
 
-- [ ] Transfer exact `STYLE.md` token system, shell, light/dark/system themes, controls, charts, feedback, builder canvas styling.
-- [ ] Implement question-first wizard, blank Builder canvas, three RV nodes, constants, safe formula AST, threshold event, metric node, validation, graph+form parity, undo/redo and save/reopen.
-- [ ] Implement distribution sampling library and stable reproducible worker stream contract; one 10k run with mean/probability/CI and inspectable trace.
-- [ ] Add notebook `.ipynb` export from this Builder slice; validate execution of a custom 3-RV risk model.
-- [ ] Ensure all old seven simulations remain accessible and functional.
+- [x] Transfer exact `STYLE.md` token system, shell, light/dark/system themes, controls, charts, feedback, builder canvas styling.
+- [x] Implement question-first wizard, blank Builder canvas, three RV nodes, constants, safe formula AST, threshold event, metric node, validation, graph+form parity, undo/redo and save/reopen.
+- [x] Implement distribution sampling library and stable reproducible worker stream contract; one 10k run with mean/probability/CI and inspectable trace.
+- [x] Add notebook `.ipynb` export from this Builder slice; validate execution of a custom 3-RV risk model.
+- [x] Ensure all old seven simulations remain accessible and functional.
 
 **Exit:** a blank project answers an actual risk question, saves/reopens, and exports a working Colab notebook; light/dark and keyboard baseline functional.
 
 ### Phase 2 — Harden all 12 domain examples and shared analyses
 
-- [ ] Numerically harden EX01–EX07 according to §5 and §9 without replacing them with generic Builder-only screens.
-- [ ] Implement EX08–EX12 with explicit assumptions, domain unit tests and reference values.
-- [ ] Provide distribution editor, results dashboard, empirical CDF/histogram/convergence, confidence method, file export for each.
-- [ ] Validate all 12 notebooks and both Python/R exports via automated execution/reference checks.
+- [x] Numerically harden EX01–EX07 according to §5 and §9 without replacing them with generic Builder-only screens.
+- [x] Implement EX08–EX12 with explicit assumptions, domain unit tests and reference values.
+- [x] Provide distribution editor, results dashboard, empirical CDF/histogram/convergence, confidence method, file export for each.
+- [x] Validate all 12 notebooks and both Python/R exports via automated execution/reference checks.
 
 **Exit:** all 12 manifest entries load, simulate, explain, export and pass science fixtures.
 
 ### Phase 3 — Twelve lessons, twelve challenges and comparisons
 
-- [ ] Publish precisely 12 lessons and 12 graded challenges with versioned manifests, rubric and persistence.
-- [ ] Implement compare: duplicate baseline, modify assumptions, run and show differences/uncertainty clearly.
-- [ ] Add Builder template library for project budget, product revenue and rare-event education; keep templates out of 12 catalog count.
+- [x] Publish precisely 12 lessons and 12 graded challenges with versioned manifests, rubric and persistence.
+- [x] Implement compare: duplicate baseline, modify assumptions, run and show differences/uncertainty clearly.
+- [x] Add Builder template library for project budget, product revenue and rare-event education; keep templates out of 12 catalog count.
 - [ ] Add deep links among each lesson, example, challenge and relevant Builder node/metric.
 
 **Exit:** 12/12/12 manifest assertions pass; no challenge is graded on a single lucky run; complete teaching progression.
@@ -772,7 +772,7 @@ Add a short `docs/deployment/netlify.md` and `docs/deployment/railway.md` with e
 ### Phase 4 — Complete export and dual deployment acceptance
 
 - [ ] Netlify `netlify.toml` verified build/publish/deep-link routing and smoke tests.
-- [ ] Railway production container/reproducible static serving, `PORT` binding, SPA fallback, smoke tests.
+- [x] Railway production container/reproducible static serving, `PORT` binding, SPA fallback, smoke tests.
 - [ ] Python, R, Colab, model JSON, CSV and run bundles work on **both** deployments with no secrets or backend.
 - [ ] Finish keyboard navigation, focus, 320px mobile reflow, 400% zoom, both themes, reduced motion, empty/error states.
 - [ ] Run benchmark suite, privacy/security review, regression tests and teacher walkthrough; document outstanding limitations.
@@ -807,37 +807,37 @@ These are not substitutes for completing P1–P4. Avoid sneaking an experimental
 
 ### Functional
 
-- [ ] Original 7 simulations preserved, correctly labeled and scientifically audited.
+- [x] Original 7 simulations preserved, correctly labeled and scientifically audited.
 - [ ] Exactly **12 examples, 12 lessons, 12 challenges** with full versioned fixtures and crosslinks.
-- [ ] Full visual **Simulation Builder** is discoverable as the main workspace, with question wizard and blank canvas.
+- [x] Full visual **Simulation Builder** is discoverable as the main workspace, with question wizard and blank canvas.
 - [ ] Node editor and keyboard/table editor agree; valid DAG, typed formulas, distributions, units, decision metric and threshold.
-- [ ] Save/open/duplicate/import/export complete Builder and example project with no semantic loss.
-- [ ] Scenarios compare controlled changes with correct units and uncertainty.
+- [x] Save/open/duplicate/import/export complete Builder and example project with no semantic loss.
+- [x] Scenarios compare controlled changes with correct units and uncertainty.
 
 ### Science and reproducibility
 
-- [ ] Deterministic browser replay at fixed seed/engine/workload regardless of worker count or animation.
-- [ ] No `Math.random` in scientific functions; no JS `eval`/`new Function` for user model expressions.
-- [ ] Correct probability/mean/quantile labels, Wilson/t intervals and replicate-level independence logic.
-- [ ] Math fixtures for EX01–EX12, stress/edge cases, unit conversions, invalid input, domain restrictions.
-- [ ] Clear distinction between model uncertainty, sampling error, analytic benchmark, and forecast claims.
-- [ ] Long/invalid jobs cancel, report partial results, do not freeze UI.
+- [x] Deterministic browser replay at fixed seed/engine/workload regardless of worker count or animation.
+- [x] No `Math.random` in scientific functions; no JS `eval`/`new Function` for user model expressions.
+- [x] Correct probability/mean/quantile labels, Wilson/t intervals and replicate-level independence logic.
+- [x] Math fixtures for EX01–EX12, stress/edge cases, unit conversions, invalid input, domain restrictions.
+- [x] Clear distinction between model uncertainty, sampling error, analytic benchmark, and forecast claims.
+- [x] Long/invalid jobs cancel, report partial results, do not freeze UI.
 
 ### Export and platform
 
-- [ ] `.ipynb` export for all **12 examples and core Builder models** passes `nbformat` and execution tests.
-- [ ] Python and R exports preserve current parameters for all 12 and supported Builder nodes.
-- [ ] Local ZIP/JSON/CSV outputs include reproducibility manifest and protected user labels/data.
+- [x] `.ipynb` export for all **12 examples and core Builder models** passes `nbformat` and execution tests.
+- [x] Python and R exports preserve current parameters for all 12 and supported Builder nodes.
+- [x] Local ZIP/JSON/CSV outputs include reproducibility manifest and protected user labels/data.
 - [ ] Both Netlify and Railway deploy, serve deep links and run workers, projects, notebook downloads.
-- [ ] No paid backend, login, database, OAuth or credentials required for core feature.
+- [x] No paid backend, login, database, OAuth or credentials required for core feature.
 
 ### Visual, educational and accessibility
 
-- [ ] STYLE.md design transfer across light/dark/system, full shell, charts, builder and learning views.
-- [ ] Chart types follow data semantics, axis unit labels, source/interval/method subtitles and table equivalents.
+- [x] STYLE.md design transfer across light/dark/system, full shell, charts, builder and learning views.
+- [x] Chart types follow data semantics, axis unit labels, source/interval/method subtitles and table equivalents.
 - [ ] 12 complete learner journeys with explanatory feedback and useful next steps.
 - [ ] Functional keyboard editor; accessible dialogs, focus, contrast, reduced motion, narrow screen and 400% zoom behavior.
-- [ ] Screenshot/e2e test matrix, known defects and actual verified results committed to documentation.
+- [x] Screenshot/e2e test matrix, known defects and actual verified results committed to documentation.
 
 ## 18. Suggested first prompt to coding agents
 
@@ -859,4 +859,4 @@ These are not substitutes for completing P1–P4. Avoid sneaking an experimental
 
 ---
 
-**Status:** specification delivered; project implementation **not performed or verified**. Agents must establish baseline first. The cardinality/deployment/Colab criteria above are release requirements, not assertions that they currently exist.
+**Status:** implementation progress and verification evidence are tracked in [`docs/status.md`](docs/status.md); checked boxes above are backed by that record (last verified 18 November 2026). Agents must establish baseline first. The cardinality/deployment/Colab criteria above are release requirements, not assertions that they currently exist.
