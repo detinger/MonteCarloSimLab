@@ -1,6 +1,8 @@
 import {resultNumber} from '../../components/preferences'
 import {convergenceSvg} from './chart.js'
 import {computeSensitivity} from './sensitivity.js'
+import DistributionChart from '../../components/analysis/DistributionChart'
+import '../../styles/analysis.css'
 import { useMemo, useState } from 'react'
 
 const fmt=n=>resultNumber(n,defaultFormat)
@@ -31,7 +33,7 @@ function Tornado({sensitivity, unit}) {
   </svg>
 }
 
-export default function Results({run,stale,embedded}) {
+export default function Results({run,stale}) {
   const [tab,setTab] = useState('Overview')
   const result = run?.result, model = run?.model
   const sensitivity = useMemo(() => model ? computeSensitivity(model) : null, [model])
@@ -39,13 +41,19 @@ export default function Results({run,stale,embedded}) {
   if (!result?.n) return <p className="bd-hint">Run the model to estimate the mean output and the probability of your threshold event.</p>
 
   const statusLine = (stale ? 'From an earlier model revision' : result.status === 'complete' ? 'Completed run' : 'Partial run') + ' · Seed ' + model.seed
-  const tabs = <div className="bd-tabs">{['Overview','Samples','Convergence',...(sensitivity?['Sensitivity']:[])].map(v => <button aria-pressed={tab===v} key={v} onClick={() => setTab(v)}>{v}</button>)}</div>
+  const tabs = <div className="bd-tabs">{['Overview','Histogram','Cumulative frequency','Samples','Convergence',...(sensitivity?['Sensitivity']:[])].map(v => <button aria-pressed={tab===v} key={v} onClick={() => setTab(v)}>{v}</button>)}<span className="bd-tabs-status">{statusLine}</span></div>
   const content = <>
     {tab === 'Overview' && <><div className="bd-kpis">
       <div><small>P(output {model.comparator ?? '>'} {fmt(model.threshold)} {model.unit})</small><strong>{pct(result.probability)}</strong><span>95% Wilson interval · {bounds(result.probabilityCI,pct)}</span></div>
       <div><small>Mean output {model.unit && '('+model.unit+')'}</small><strong>{fmt(result.mean)}</strong><span>95% t interval · {bounds(result.meanCI,fmt)}</span></div>
       <div><small>Completed replications</small><strong>{fmt(result.n)}</strong><span>{fmt(result.hits)} events observed</span></div></div>
       <p className="bd-hint">Intervals describe sampling uncertainty under the saved model assumptions. Wider input ranges can also change the modeled outcomes.</p></>}
+    {(tab === 'Histogram' || tab === 'Cumulative frequency') && (result.histogram ? <>
+      <DistributionChart rows={result.histogram.map(b => ({lo:b.low,hi:b.high,count:b.count,observed:b.count/result.n}))} unit={'Output'+(model.unit ? ' ('+model.unit+')' : '')} n={result.n}
+        marker={[{value:model.threshold,label:'Threshold '+fmt(model.threshold)},{value:result.mean,label:'Mean '+fmt(result.mean),color:'var(--accent)',dash:''}]} view={tab === 'Histogram' ? 'histogram' : 'cdf'}/>
+      <div className="bd-table-wrap"><table><thead><tr><th>Percentile</th>{result.quantiles.map(q => <th key={q.p}>P{Math.round(q.p*100)}</th>)}</tr></thead>
+        <tbody><tr><td>Output {model.unit && '('+model.unit+')'}</td>{result.quantiles.map(q => <td key={q.p}>{fmt(q.value)}</td>)}</tr></tbody></table></div></>
+      : <p className="bd-hint">The output distribution is available once a run completes all replications. Run the model again to see it.</p>)}
     {tab === 'Samples' && <><p className="bd-hint">Showing {result.trace.length} captured replications. Values are displayed to four decimal places.</p>
       <div className="bd-table-wrap"><table><thead><tr><th>Replication</th>{model.inputs.map(v => <th key={v.name}>{v.label || v.name}</th>)}<th>Output ({model.unit || 'units'})</th><th>Output {model.comparator ?? '>'} {fmt(model.threshold)}</th></tr></thead>
         <tbody>{result.trace.map((v,i) => <tr key={i}><td>{i+1}</td>{model.inputs.map(x => <td key={x.name}>{fmt(v.inputs[x.name])}</td>)}<td>{fmt(v.output)}</td><td>{v.event ? 'Yes' : 'No'}</td></tr>)}</tbody></table></div></>}
@@ -57,5 +65,5 @@ export default function Results({run,stale,embedded}) {
         <tbody>{sensitivity.bars.map(b => <tr key={b.name}><td>{b.label}</td><td>{fmt(b.lo)}</td><td>{fmt(b.hi)}</td><td>{fmt(b.swing)}</td></tr>)}</tbody></table></div></>}
   </>
 
-  return <><p className="bd-hint">{statusLine}</p>{tabs}{content}</>
+  return <>{tabs}{content}</>
 }

@@ -9,6 +9,13 @@ for(const [kind,[,,params]] of Object.entries(distributions)) {
     assert.deepEqual(a.draws.slice(0,100),b.draws)
     assert.equal(a.rows.reduce((sum,row)=>sum+row.count,0),2000)
     assert.ok(a.rows.every(row=>Number.isFinite(row.expected) && row.expected>=0 && row.expected<=1.0000001))
+    const law=lawFor(kind,params)
+    if(law.undefinedMean) {
+      // No mean exists (Cauchy): check the sample median against the theoretical one instead.
+      const median=law.inv(.5), density=law.pdf(median)
+      assert.ok(Math.abs(a.median-median)<5/(2*density*Math.sqrt(2000)))
+      return
+    }
     const sd=Math.sqrt(a.draws.reduce((s,x)=>s+(x-a.mean)**2,0)/1999)
     assert.ok(Math.abs(a.mean-a.reference)<5*sd/Math.sqrt(2000)+1e-10)
   })

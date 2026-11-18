@@ -11,5 +11,4 @@
     <rect x="22.95" y="20.5" width="2.3" height="6.5"  rx="0.3"/>
     <rect x="25.65" y="23.5" width="2.3" height="3.5"  rx="0.3"/>
   </g>
-  <path d="M4.5 23 Q7 22 9.4 16 Q12 8.8 16 7.2 Q20 8.8 22.6 16 Q25 22 27.5 23" fill="none" stroke="#ef9330" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

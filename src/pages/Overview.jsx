@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Workflow, Search, BookOpen, FolderOpen, FlaskConical, SlidersHorizontal, Building2, ListChecks, ChartColumn, GitCompareArrows, Download, GraduationCap, Trophy, CircleHelp, Trash2, AlertTriangle } from 'lucide-react'
+import { ArrowRight, Workflow, Search, BookOpen, FolderOpen, FlaskConical, SlidersHorizontal, Building2, Target, Signpost, ListChecks, ChartColumn, GitCompareArrows, Download, GraduationCap, Trophy, CircleHelp, Trash2, AlertTriangle } from 'lucide-react'
 import {allProgress} from '../learning/progress'
 import {curriculum} from '../learning/curriculum'
 import { labs } from '../catalog'
@@ -38,8 +38,13 @@ export function Catalog() {
 
 const workspaceTools = [
   { id:'builder', label:'Simulation Builder', desc:'Define uncertain inputs, connect them with a formula and estimate probabilities.', icon:Workflow },
-  { id:'industry', label:'IT Industry Models', desc:'10 ready-to-run Monte Carlo models for cloud, delivery, security and IT operations.', icon:Building2 },
+  { id:'industry', label:'Simulation Examples', desc:'13 ready-to-run Monte Carlo models for budgets, revenue, risk and IT operations.', icon:Building2 },
+  { id:'simchallenges', label:'Simulation Challenges', desc:'10 what-if exercises: change a model, re-run it and check the probability.', icon:Target },
+]
+
+const distributionTools = [
   { id:'distributions', label:'Distribution Studio', desc:'Visualise and compare probability distributions with live parameter controls.', icon:SlidersHorizontal },
+  { id:'helper', label:'Distribution Helper', desc:'Answer questions about your data on an explorable decision tree to find a distribution that fits.', icon:Signpost },
 ]
 
 const learningLinks = [
@@ -116,24 +121,18 @@ export default function Overview() {
         <div className="feature-label"><Workflow size={17}/>Monte Carlo Simulation Lab</div>
         <h1>Build models, run experiments, explore uncertainty.</h1>
         <p>Define uncertain inputs, connect them with a formula and estimate the probability of crossing a threshold. Explore ready-made experiments or build your own from a question.</p>
-        <div className="hero-actions">
-          <a className="action-primary" href="#/builder">Open Builder <ArrowRight size={16}/></a>
-          <a className="action-secondary" href="#/labs">Explore {labs.length} examples <ArrowRight size={16}/></a>
-        </div>
       </div>
       <DensitySurface/>
     </section>
 
     <section className="home-section">
       <h2 className="home-section-heading">Learning</h2>
-      <div className="home-learn-grid">
-        {learningLinks.map(l=><a key={l.id} className="home-learn-card" href={'#/'+l.id}>
-          <div className="home-learn-card-icon"><l.icon size={18}/></div>
-          <div>
-            <strong>{l.label}</strong>
-            <p>{l.desc}</p>
-          </div>
-          <ArrowRight size={14} className="learn-arrow"/>
+      <div className="tool-grid tool-grid-learning">
+        {learningLinks.map(l=><a key={l.id} className="tool-card" href={'#/'+l.id}>
+          <div className="tool-card-icon"><l.icon size={20}/></div>
+          <strong>{l.label}</strong>
+          <p>{l.desc}</p>
+          <span className="tool-card-link">Open <ArrowRight size={13}/></span>
         </a>)}
       </div>
       <div className="learn-progress-bar-wrap">
@@ -147,6 +146,18 @@ export default function Overview() {
       <h2 className="home-section-heading">Workspace</h2>
       <div className="tool-grid">
         {workspaceTools.map(t=><a key={t.id} className="tool-card" href={'#/'+t.id}>
+          <div className="tool-card-icon"><t.icon size={20}/></div>
+          <strong>{t.label}</strong>
+          <p>{t.desc}</p>
+          <span className="tool-card-link">Open <ArrowRight size={13}/></span>
+        </a>)}
+      </div>
+    </section>
+
+    <section className="home-section">
+      <h2 className="home-section-heading">Distributions</h2>
+      <div className="tool-grid">
+        {distributionTools.map(t=><a key={t.id} className="tool-card" href={'#/'+t.id}>
           <div className="tool-card-icon"><t.icon size={20}/></div>
           <strong>{t.label}</strong>
           <p>{t.desc}</p>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Activity, Binary, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, Copy, Equal, FunctionSquare, Plus, Settings2, Trash2, X } from 'lucide-react'
+import { Activity, Binary, ChartLine, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, Copy, Download, Equal, FileArchive, FileCode, FileJson, FileSpreadsheet, FunctionSquare, NotebookText, Plus, Settings2, Trash2, X } from 'lucide-react'
 import {slotKeys,isListLaw} from '../../engine/inputLaws.js'
 import {comparators} from '../../engine/index.js'
 import { createProject, families, issuesFor, newInput, template } from './project'
@@ -9,10 +9,10 @@ export function Field({ title, ...props }) {
   return <label className="bd-field"><span>{title}</span><input {...props}/></label>
 }
 const RESERVED = new Set(['abs','sqrt','log','exp','min','max','pi','e','sin','cos','tan','if'])
-function IdentifierField({ name, rename, usedNames=[] }) {
+// Callers key this by `name`, so a rename elsewhere remounts it with fresh state.
+function IdentifierInput({ name, rename, usedNames=[] }) {
   const [value, setValue] = useState(name)
   const [error, setError] = useState('')
-  useEffect(() => { setValue(name); setError('') }, [name])
   function validate(v) {
     if (!v.trim()) return 'Cannot be empty'
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(v)) return 'Letters, digits and underscores only'
@@ -27,145 +27,213 @@ function IdentifierField({ name, rename, usedNames=[] }) {
     if (err) { setError(err); setValue(name); return }
     rename(name, v)
   }
-  return <><label className="bd-field"><span>Identifier</span>
-    <input value={value} maxLength={40}
+  return <><input className="bd-cell bd-cell-mono" aria-label="Identifier" value={value} maxLength={40}
       onChange={e => { setValue(e.target.value); setError('') }}
       onBlur={commit}
       onKeyDown={e => { if (e.key==='Enter') e.target.blur(); if (e.key==='Escape') { setValue(name); setError('') } }}/>
-  </label>
-  {error && <p className="bd-hint" style={{color:'var(--error)'}}>{error}</p>}</>
+    {error && <p className="bd-hint bd-field-error">{error}</p>}</>
+}
+function IdentifierField(props) {
+  return <div className="bd-field"><span>Identifier</span><IdentifierInput key={props.name} {...props}/></div>
 }
 export function InputFields({ input, change, rename, usedNames }) {
-  return <>
+  return <div className="bd-form">
     <Field title="Display name" value={input.label} maxLength={80} onChange={e => change({label:e.target.value})}/>
-    <label className="bd-field"><span>Distribution</span>
-      <select value={input.distribution} onChange={e => {
-        const distribution = e.target.value
-        const params = Object.fromEntries(slotKeys.map((key,i)=>[key,families[distribution].defaults[i]?.toString()]))
-        change({distribution,...params})
-      }}>{Object.entries(families).map(([key,v]) => <option key={key} value={key}>{v.title}</option>)}</select>
-    </label>
-    <div className="bd-params">{families[input.distribution].fields.map((label, i) =>
-      <Field key={label} title={label} inputMode={isListLaw(input.distribution)?'text':'decimal'} maxLength={isListLaw(input.distribution)?8192:128} value={input[slotKeys[i]] ?? ''} onChange={e => change({[slotKeys[i]]: e.target.value})}/>
-    )}</div>
-    <Field title="Input unit" value={input.unit ?? ''} maxLength={40} onChange={e => change({unit:e.target.value})}/>
     {rename
       ? <IdentifierField name={input.name} rename={rename} usedNames={usedNames}/>
-      : <p className="bd-hint">Formula identifier <code>{input.name}</code></p>}
-  </>
+      : <div className="bd-field"><span>Identifier</span><code className="bd-sheet-id">{input.name}</code></div>}
+    <label className="bd-field"><span>Distribution</span>
+      <select value={input.distribution} onChange={e => change(distributionPatch(e.target.value))}>{Object.entries(families).map(([key,v]) => <option key={key} value={key}>{v.title}</option>)}</select>
+    </label>
+    <Field title="Input unit" value={input.unit ?? ''} maxLength={40} onChange={e => change({unit:e.target.value})}/>
+    <div className="bd-field bd-wide"><span>Parameters</span><div className="bd-form-params"><ParamCells input={input} change={change}/></div></div>
+  </div>
 }
-export function Expression({ draft, change, source=draft.expression, write=value=>change({expression:value}), exclude }) {
-  const candidates=[...draft.inputs,...(draft.relations||[])].filter(v=>v.name!==exclude)
-  return <><label className="bd-field"><span>Output formula</span><textarea value={source} maxLength={512} onChange={e => write(e.target.value)} placeholder="input1 + input2"/></label>
-    <div className="bd-chips">{[...draft.inputs,...(draft.relations||[])].filter(v=>v.name!==exclude).map(v => <button key={v.name} onClick={() => write((source + ' ' + v.name).trim())} title={'Insert ' + v.name}>{v.name}</button>)}</div>
-    <details className="bd-connect"><summary>Connect inputs as a sum</summary>
-      <p className="bd-hint">Checking a source replaces the formula with the sum of the checked sources.</p>
-      {candidates.map(v=>{const list=source.split('+').map(x=>x.trim()).filter(x=>candidates.some(c=>c.name===x))
-        return <label key={v.name}><input type="checkbox" checked={list.includes(v.name)} onChange={e=>write((e.target.checked?[...list,v.name]:list.filter(x=>x!==v.name)).join(' + '))}/>{v.label} <code>{v.name}</code></label>})}</details>
-    <p className="bd-hint">Use arithmetic, powers (^), abs, sqrt, log, exp, min or max. Each identifier takes one value per replication.</p></>
+export function Expression({ draft, change, source=draft.expression, write=value=>change({expression:value}), exclude, label='Output formula' }) {
+  const names=[...draft.inputs,...(draft.relations||[])].map(v=>v.name).filter(n=>n!==exclude)
+  return <div className="bd-expr">
+    <label className="bd-field"><span>{label}</span><input className="bd-cell-mono" value={source} maxLength={512} onChange={e => write(e.target.value)} placeholder="input1 + input2"/></label>
+    {names.length > 0 && <div className="bd-chips"><span className="bd-hint">Insert:</span>{names.map(n => <button key={n} onClick={() => write((source + ' ' + n).trim())} title={'Insert ' + n}>{n}</button>)}</div>}
+    <p className="bd-hint">Use + − × (*) ÷ (/), powers (^), abs, sqrt, log, exp, min or max. Each identifier takes one value per replication.</p>
+  </div>
 }
+const comparatorNames={'>':'Greater than (>)','>=':'At least (≥)','<':'Less than (<)','<=':'At most (≤)'}
 function EventFields({draft,change}) {
-  const names={'>':'Greater than (>)','>=':'At least (≥)','<':'Less than (<)','<=':'At most (≤)'}
   const comparator=draft.comparator ?? '>'
-  return <><label className="bd-field"><span>Count an event when the output is</span>
-    <select value={comparator} onChange={e=>change({comparator:e.target.value})}>
-      {comparators.map(op=><option key={op} value={op}>{names[op]}</option>)}</select></label>
-    <Field title={'Threshold ('+(draft.unit || 'output units')+')'} value={draft.threshold} onChange={e=>change({threshold:e.target.value})}/>
-    <p className="bd-hint">{comparator.includes('=')?'An output equal to the threshold counts as an event.':'An output equal to the threshold falls outside the event.'}</p></>
+  return <div className="bd-event-wrap">
+    <div className="bd-sheet-event">
+      <span>Count a replication when the output is</span>
+      <select aria-label="Count an event when the output is" value={comparator} onChange={e => change({comparator:e.target.value})}>
+        {comparators.map(op => <option key={op} value={op}>{comparatorNames[op]}</option>)}</select>
+      <span className="bd-event-value"><input aria-label={'Threshold ('+(draft.unit || 'output units')+')'} inputMode="decimal" value={draft.threshold} onChange={e => change({threshold:e.target.value})}/>
+        {draft.unit && <span>{draft.unit}</span>}</span>
+    </div>
+    <p className="bd-hint">{comparator.includes('=')?'An output equal to the threshold counts as an event.':'An output equal to the threshold falls outside the event.'}</p>
+  </div>
 }
 export function Settings({ draft, change }) {
   return <div className="bd-params"><Field title="Replications" inputMode="numeric" value={draft.samples} onChange={e => change({samples:e.target.value})}/>
     <Field title="Seed" inputMode="numeric" value={draft.seed} onChange={e => change({seed:e.target.value})}/></div>
 }
 export function ModelQuestion({draft, change}) {
-  return <><Field title="Project name" maxLength={120} value={draft.title} onChange={e => change({title:e.target.value})}/>
-    <label className="bd-field"><span>Decision question</span><textarea maxLength={1000} value={draft.question} onChange={e => change({question:e.target.value})}/></label>
-    <Field title="Output unit" value={draft.unit} maxLength={40} onChange={e => change({unit:e.target.value})}/>
-    <label className="bd-field"><span>Model assumptions</span><textarea maxLength={2000} value={draft.assumptions} onChange={e => change({assumptions:e.target.value})}/></label></>
+  return <div className="bd-form bd-form-question">
+    <Field title="Project name" maxLength={120} value={draft.title} onChange={e => change({title:e.target.value})}/>
+    <Field title="Output unit" placeholder="e.g. EUR, days" value={draft.unit} maxLength={40} onChange={e => change({unit:e.target.value})}/>
+    <label className="bd-field bd-wide"><span>Decision question</span><textarea rows={2} maxLength={1000} value={draft.question} onChange={e => change({question:e.target.value})}/></label>
+    <label className="bd-field bd-wide"><span>Model assumptions</span><textarea rows={2} maxLength={2000} value={draft.assumptions} onChange={e => change({assumptions:e.target.value})}/></label>
+  </div>
 }
 
-export function nodeTitle(draft, selected) {
+const kindNames = {input:'Random variable', constant:'Constant', formula:'Formula', output:'Model output', event:'Threshold event', metric:'Metric', question:'Project'}
+function nodeKind(draft, selected) {
+  const input = draft.inputs.find(v => v.name === selected)
+  if (input) return input.distribution === 'constant' ? 'constant' : 'input'
+  if (draft.relations?.some(v => v.name === selected)) return 'formula'
+  return {formula:'output', event:'event', metric:'metric'}[selected] || 'question'
+}
+function nodeTitle(draft, selected) {
   const input = draft.inputs.find(v => v.name === selected)
   const derived = draft.relations?.find(v => v.name === selected)
-  const names = {formula:'Output formula',event:'Threshold event',metric:'Probability metric',question:'Project settings'}
+  const names = {formula:'Output formula',event:'Threshold event',metric:'Event probability',question:'Project settings'}
   return input?.label || derived?.label || names[selected] || 'Project settings'
 }
 
-// Per-node editor, reused by the canvas popup and the setup-tree popup.
+// Per-node editor shown in the diagram popup.
 export function NodeEditor({draft, selected, change, select, close}) {
   const input = draft.inputs.find(v => v.name === selected)
   const derived = draft.relations?.find(v => v.name === selected)
+  const relations = draft.relations || []
   const editInput = patch => change({inputs:draft.inputs.map(v => v === input ? {...v,...patch} : v)})
-  const editDerived = patch => change({relations:draft.relations.map(v => v === derived ? {...v,...patch} : v)})
-  const usedNames = [...draft.inputs,...(draft.relations||[])].filter(v => v !== input).map(v => v.name)
-  const renameInput = (oldName, newName) => {
-    const sub = expr => expr?.replace(new RegExp(`\\b${oldName}\\b`,'g'), newName)
-    change({inputs:draft.inputs.map(v => v === input ? {...v,name:newName} : v),
-      expression:sub(draft.expression),relations:draft.relations?.map(r=>({...r,expression:sub(r.expression)}))})
-    select(newName)
-  }
+  const editDerived = patch => change({relations:relations.map(v => v === derived ? {...v,...patch} : v)})
+  const usedNames = [...draft.inputs,...relations].filter(v => v !== input).map(v => v.name)
+  const renameInput = (oldName, newName) => { change(renamePatch(draft, oldName, newName)); select(newName) }
   const removeNode = patch => { change(patch); select('formula'); close?.() }
+  const done = close && <button className="bd-primary" onClick={close}>Done</button>
   if (input) return <>
     <InputFields input={input} change={editInput} rename={renameInput} usedNames={usedNames}/>
-    <div className="bd-tools"><button disabled={draft.inputs.length >= 32} onClick={() => {
-      const copy = {...input, name:newInput(draft.inputs).name, label:input.label + ' copy'}
-      change({inputs:[...draft.inputs,copy]}); select(copy.name)
-    }}><Copy size={14}/> Duplicate</button>
-    <button onClick={() => removeNode({inputs:draft.inputs.filter(v => v !== input)})}><Trash2 size={14}/> Remove</button></div>
+    <footer className="bd-dialog-actions">
+      <button disabled={draft.inputs.length >= 32} onClick={() => {
+        const copy = {...input, name:newInput([...draft.inputs,...relations]).name, label:input.label + ' copy'}
+        change({inputs:[...draft.inputs,copy]}); select(copy.name)
+      }}><Copy size={14}/> Duplicate</button>
+      <button className="bd-danger" onClick={() => removeNode({inputs:draft.inputs.filter(v => v !== input)})}><Trash2 size={14}/> Remove</button>
+      {done}
+    </footer>
   </>
   if (derived) return <>
-    <Field title="Formula name" value={derived.label} onChange={e=>editDerived({label:e.target.value})}/>
-    <Field title="Formula unit" value={derived.unit} onChange={e=>editDerived({unit:e.target.value})}/>
-    <Expression draft={draft} source={derived.expression} exclude={derived.name} write={expression=>editDerived({expression})}/>
-    <p className="bd-hint">Formula identifier <code>{derived.name}</code></p>
-    <button onClick={()=>removeNode({relations:draft.relations.filter(v=>v!==derived)})}><Trash2 size={14}/> Remove formula</button>
+    <div className="bd-form">
+      <Field title="Formula name" value={derived.label} onChange={e=>editDerived({label:e.target.value})}/>
+      <div className="bd-field"><span>Identifier</span><code className="bd-sheet-id">{derived.name}</code></div>
+      <div className="bd-wide"><Expression draft={draft} label="Expression" source={derived.expression} exclude={derived.name} write={expression=>editDerived({expression})}/></div>
+      <Field title="Formula unit" value={derived.unit ?? ''} onChange={e=>editDerived({unit:e.target.value})}/>
+    </div>
+    <footer className="bd-dialog-actions">
+      <button className="bd-danger" onClick={()=>removeNode({relations:relations.filter(v=>v!==derived)})}><Trash2 size={14}/> Remove formula</button>
+      {done}
+    </footer>
   </>
-  if (selected === 'formula') return <Expression draft={draft} change={change}/>
-  if (selected === 'event') return <EventFields draft={draft} change={change}/>
-  if (selected === 'metric') return <p className="bd-hint">The event probability is the fraction of independent replications meeting the threshold condition. Set replications and seed in Project settings.</p>
-  return <><ModelQuestion draft={draft} change={change}/><Settings draft={draft} change={change}/></>
+  const footer = done && <footer className="bd-dialog-actions">{done}</footer>
+  if (selected === 'formula') return <><Expression draft={draft} change={change}/>{footer}</>
+  if (selected === 'event') return <><EventFields draft={draft} change={change}/>{footer}</>
+  if (selected === 'metric') return <><p className="bd-note">The event probability is the fraction of independent replications meeting the threshold condition, reported with a 95% Wilson interval. It uses {draft.samples || '—'} replications with seed {draft.seed || '—'}; change them in the toolbar.</p>{footer}</>
+  return <><ModelQuestion draft={draft} change={change}/><Settings draft={draft} change={change}/>{footer}</>
 }
 
-const kindMeta = {
-  input: [Activity, 'Random variable'], constant: [Equal, 'Constant'],
-  formula: [FunctionSquare, 'Formula'], event: [Binary, 'Threshold event'], metric: [ChartNoAxesColumnIncreasing, 'Metric'],
+// Patch that switches an input to another distribution with its default parameters.
+function distributionPatch(distribution) {
+  return {distribution,...Object.fromEntries(slotKeys.map((key,i)=>[key,families[distribution].defaults[i]?.toString()]))}
 }
-// One node in the setup tree: hierarchy glyph + its full inline editor (all the
-// fields that used to live in the right pane).
-function SetupNode({id, kind, title, depth, glyph, draft, change, select}) {
-  const [Icon] = kindMeta[kind]
-  return <div className={'bd-setup-node bd-' + kind} style={{marginLeft:depth*18}}>
-    <div className="bd-setup-node-head"><span className="bd-tree-glyph">{glyph}</span><Icon size={14}/><strong>{title}</strong></div>
-    <div className="bd-setup-node-body"><NodeEditor draft={draft} selected={id} change={change} select={select}/></div>
-  </div>
+// Patch that renames an input and rewrites every formula that refers to it.
+function renamePatch(draft, oldName, newName) {
+  const sub = expr => expr?.replace(new RegExp(`\\b${oldName}\\b`,'g'), newName)
+  return {inputs:draft.inputs.map(v => v.name === oldName ? {...v,name:newName} : v),
+    expression:sub(draft.expression),relations:draft.relations?.map(r=>({...r,expression:sub(r.expression)}))}
 }
-// Reversed hierarchy: inputs and formulas (leaves) on top, flowing down to the metric.
-export function SetupTree({draft, change, select}) {
-  const sources = [
-    ...draft.inputs.map(v => ({id:v.name, title:v.label||v.name, kind:v.distribution==='constant'?'constant':'input'})),
-    ...(draft.relations||[]).map(v => ({id:v.name, title:v.label||v.name, kind:'formula'})),
-  ]
-  const chain = [
-    {id:'formula', depth:1, title:'Model output', kind:'formula'},
-    {id:'event', depth:2, title:'Threshold event', kind:'event'},
-    {id:'metric', depth:3, title:'Event probability', kind:'metric'},
-  ]
-  return <div className="bd-setup">
-    <section className="bd-setup-sec">
-      <h3 className="bd-setup-h"><Settings2 size={14}/> Project settings</h3>
-      <div className="bd-setup-node bd-setup-project"><div className="bd-setup-node-body"><NodeEditor draft={draft} selected="question" change={change} select={select}/></div></div>
-    </section>
-    <section className="bd-setup-sec">
-      <h3 className="bd-setup-h">Model hierarchy</h3>
-      {sources.map((n, i) => <SetupNode key={n.id} id={n.id} kind={n.kind} title={n.title} depth={0} glyph={i === sources.length-1 ? '└─' : '├─'} draft={draft} change={change} select={select}/>)}
-      {chain.map(n => <SetupNode key={n.id} id={n.id} kind={n.kind} title={n.title} depth={n.depth} glyph="└─" draft={draft} change={change} select={select}/>)}
-    </section>
+
+function Step({n, title, hint, action, children}) {
+  return <section className="bd-sheet-step">
+    <header className="bd-sheet-step-head">
+      <span className="bd-sheet-num">{n}</span>
+      <div><h3>{title}</h3>{hint && <p className="bd-hint">{hint}</p>}</div>
+      {action && <div className="bd-sheet-step-action">{action}</div>}
+    </header>
+    {children}
+  </section>
+}
+
+// Compact column labels for the table; the full label stays as tooltip and accessible name.
+const shortLabel = label => label.replace(/standard deviation/i, 'SD').replace(/^Success probability$/, 'Success prob.')
+function ParamCells({input, change, short}) {
+  const list = isListLaw(input.distribution)
+  return <div className={'bd-sheet-params'+(list?' bd-sheet-params-list':'')}>{families[input.distribution].fields.map((label,i) =>
+    <label key={label} className="bd-sheet-param" title={label}><span>{list ? 'Values' : short ? shortLabel(label) : label}</span>
+      <input inputMode={list?'text':'decimal'} maxLength={list?8192:128} aria-label={label} placeholder={list ? String(families[input.distribution].defaults[0]) : undefined}
+        value={input[slotKeys[i]] ?? ''} onChange={e => change({[slotKeys[i]]: e.target.value})}/></label>)}</div>
+}
+
+// Spreadsheet-style setup: the whole model on one page, in the order it is evaluated.
+export function SetupTable({draft, change, selected, select, add, addFormula}) {
+  const relations = draft.relations || []
+  const names = [...draft.inputs,...relations].map(v => v.name)
+  const editInput = (input, patch) => change({inputs:draft.inputs.map(v => v === input ? {...v,...patch} : v)})
+  const editDerived = (derived, patch) => change({relations:relations.map(v => v === derived ? {...v,...patch} : v)})
+  const removed = name => { if (selected === name) select('formula') }
+  return <div className="bd-sheet">
+    <Step n={1} title="Question" hint="What decision should this simulation inform?">
+      <div className="bd-sheet-card bd-sheet-pad"><ModelQuestion draft={draft} change={change}/></div>
+    </Step>
+
+    <Step n={2} title="Inputs" hint="Each uncertain quantity gets a fresh random value in every replication. Use Constant for fixed values."
+      action={<button className="bd-add bd-add-input" disabled={draft.inputs.length >= 32} onClick={add}><Plus size={14}/> Add input</button>}>
+      <div className="bd-sheet-card bd-sheet-table-wrap">
+        {draft.inputs.length ? <table className="bd-sheet-table">
+          <thead><tr><th>Name</th><th>Identifier</th><th>Distribution</th><th>Parameters</th><th>Unit</th><th><span className="bd-sr">Actions</span></th></tr></thead>
+          <tbody>{draft.inputs.map(input => <tr key={input.name} className={(selected === input.name ? 'bd-row-selected ' : '') + (input.distribution === 'constant' ? 'bd-row-constant' : 'bd-row-input')} onFocus={() => select(input.name)}>
+            <td><input className="bd-cell" aria-label="Display name" maxLength={80} value={input.label} onChange={e => editInput(input,{label:e.target.value})}/></td>
+            <td><IdentifierInput key={input.name} name={input.name} usedNames={names.filter(n => n !== input.name)} rename={(from,to) => { change(renamePatch(draft,from,to)); select(to) }}/></td>
+            <td><select className="bd-cell" aria-label="Distribution" value={input.distribution} onChange={e => editInput(input,distributionPatch(e.target.value))}>
+              {Object.entries(families).map(([key,v]) => <option key={key} value={key}>{v.title}</option>)}</select></td>
+            <td><ParamCells short input={input} change={patch => editInput(input,patch)}/></td>
+            <td><input className="bd-cell bd-cell-unit" aria-label="Input unit" maxLength={40} value={input.unit ?? ''} onChange={e => editInput(input,{unit:e.target.value})}/></td>
+            <td className="bd-sheet-actions">
+              <button aria-label={'Duplicate '+input.label} title="Duplicate" disabled={draft.inputs.length >= 32} onClick={() => {
+                const copy = {...input, name:newInput([...draft.inputs,...relations]).name, label:input.label + ' copy'}
+                change({inputs:[...draft.inputs,copy]}); select(copy.name)
+              }}><Copy size={14}/></button>
+              <button aria-label={'Remove '+input.label} title="Remove" onClick={() => { change({inputs:draft.inputs.filter(v => v !== input)}); removed(input.name) }}><Trash2 size={14}/></button>
+            </td>
+          </tr>)}</tbody>
+        </table> : <p className="bd-empty">No inputs yet. Add one to describe an uncertain quantity.</p>}
+      </div>
+    </Step>
+
+    <Step n={3} title="Calculation" hint="Combine inputs into the output. Intermediate formulas are optional named steps you can reuse."
+      action={<button className="bd-add bd-add-formula" disabled={relations.length >= 24} onClick={addFormula}><Plus size={14}/> Add formula</button>}>
+      {relations.length > 0 && <div className="bd-sheet-card bd-sheet-table-wrap">
+        <table className="bd-sheet-table">
+          <thead><tr><th>Name</th><th>Identifier</th><th>Expression</th><th>Unit</th><th><span className="bd-sr">Actions</span></th></tr></thead>
+          <tbody>{relations.map(derived => <tr key={derived.name} className={(selected === derived.name ? 'bd-row-selected ' : '') + 'bd-row-formula'} onFocus={() => select(derived.name)}>
+            <td><input className="bd-cell" aria-label="Formula name" value={derived.label} onChange={e => editDerived(derived,{label:e.target.value})}/></td>
+            <td><code className="bd-sheet-id">{derived.name}</code></td>
+            <td><input className="bd-cell bd-cell-mono bd-cell-expr" aria-label={'Expression for '+derived.label} maxLength={512} value={derived.expression} onChange={e => editDerived(derived,{expression:e.target.value})}/></td>
+            <td><input className="bd-cell bd-cell-unit" aria-label="Formula unit" value={derived.unit ?? ''} onChange={e => editDerived(derived,{unit:e.target.value})}/></td>
+            <td className="bd-sheet-actions"><button aria-label={'Remove '+derived.label} title="Remove" onClick={() => { change({relations:relations.filter(v => v !== derived)}); removed(derived.name) }}><Trash2 size={14}/></button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>}
+      <div className="bd-sheet-card bd-sheet-pad"><Expression draft={draft} change={change}/></div>
+    </Step>
+
+    <Step n={4} title="Event" hint="The simulation estimates how often this happens.">
+      <div className="bd-sheet-card bd-sheet-pad"><EventFields draft={draft} change={change}/></div>
+      <p className="bd-hint">Result: the event probability with a 95% Wilson interval, from {draft.samples || '—'} replications with seed {draft.seed || '—'} (set both in the toolbar).</p>
+    </Step>
   </div>
 }
 
 export function ResultsPanel({run, stale, open, onToggle, height, onResizeStart, onResizeMove, onResizeEnd}) {
-  return <section className={'bd-panel bd-results-bottom'+(open?' bd-results-open':'')} style={open && height ? {height:height+'px'} : undefined}>
-    {open && <div className="bd-resize-handle" onPointerDown={onResizeStart} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>}
+  return <section className={'bd-panel bd-results-bottom'+(open?' bd-results-open':'')} style={open && height && run ? {height:height+'px'} : undefined}>
+    {open && run && <div className="bd-resize-handle" onPointerDown={onResizeStart} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>}
     <header className="bd-panel-head"><h2><ChartNoAxesColumnIncreasing size={17}/> Experiment results</h2>
       <div className="bd-tools"><button onClick={onToggle} aria-label={open?'Hide results':'Show results'} title={open?'Hide results':'Show results'}>{open ? <ChevronDown size={16}/> : <ChevronUp size={16}/>}</button></div></header>
     {open && <div className="bd-pad bd-results-body"><Results run={run} stale={stale}/></div>}
@@ -174,37 +242,56 @@ export function ResultsPanel({run, stale, open, onToggle, height, onResizeStart,
 export function Issues({issues}) {
   return issues.length ? <ul className="bd-issues">{issues.map((m,i) => <li key={i}>{m}</li>)}</ul> : <p className="bd-valid">Model validated. Ready to run.</p>
 }
+const exportGroups = [
+  {title:'Code', hint:'Re-run the model outside the lab.', items:[
+    {id:'notebook',label:'Notebook',ext:'.ipynb',hint:'Jupyter or Google Colab',icon:NotebookText,needsValid:true},
+    {id:'python',label:'Python script',ext:'.py',hint:'NumPy / SciPy',icon:FileCode,needsValid:true},
+    {id:'r',label:'R script',ext:'.R',hint:'Base R stats package',icon:FileCode,needsValid:true},
+  ]},
+  {title:'Project', hint:'Back up the model or move it to another device.', items:[
+    {id:'project',label:'Project file',ext:'.json',hint:'Model and recorded run; open it with Import',icon:FileJson},
+  ]},
+  {title:'Run data', hint:'Results of the recorded run.', items:[
+    {id:'csv',label:'Sample table',ext:'.csv',hint:'Captured replications',icon:FileSpreadsheet,needsRun:true},
+    {id:'chart',label:'Convergence chart',ext:'.svg',hint:'Running mean over replications',icon:ChartLine,needsRun:true},
+    {id:'zip',label:'Run bundle',ext:'.zip',hint:'Reproducible package with notebook',icon:FileArchive,needsRun:true},
+  ]},
+]
 export function ExportPanel({run, issues, exportFile, working}) {
   const r = run?.result
-  const items = [
-    {id:'notebook',label:'Colab Notebook',ext:'.ipynb',hint:'Open in Jupyter or Google Colab',needsValid:true},
-    {id:'python',label:'Python Script',ext:'.py',hint:'NumPy / SciPy compatible',needsValid:true},
-    {id:'r',label:'R Script',ext:'.R',hint:'Base R stats package',needsValid:true},
-    {id:'project',label:'Project File',ext:'.json',hint:'Full model and recorded run'},
-    {id:'csv',label:'Sample Table',ext:'.csv',hint:'All captured replications',needsRun:true},
-    {id:'chart',label:'Convergence Chart',ext:'.svg',hint:'Running mean over replications',needsRun:true},
-    {id:'zip',label:'Run Bundle',ext:'.zip',hint:'Reproducible package with notebook',needsRun:true},
-  ]
-  return <>
-    <div className="bd-export-grid">
-      {items.map(({id,label,ext,hint,needsRun,needsValid}) => {
-        const disabled = needsRun ? !r?.n || working : needsValid ? !!issues.length : working
-        return <button key={id} className="bd-export-card" disabled={disabled} onClick={() => exportFile(id)}>
-          <div className="bd-export-card-head"><strong>{label}</strong><code>{ext}</code></div>
-          <small>{hint}</small>
+  return <div className="bd-export">
+    <p className="bd-export-status">{r?.n ? <>Recorded run · seed {run.model.seed} · {r.n.toLocaleString()} replications{r.status!=='complete'?' (partial)':''}</> : 'No recorded run yet. Run the model to unlock run data.'}</p>
+    {exportGroups.map(group => <section key={group.title} className="bd-export-group">
+      <header><h3>{group.title}</h3><p>{group.hint}</p></header>
+      <div className="bd-export-list">{group.items.map(item => {
+        const {id,label,ext,hint,needsRun,needsValid} = item
+        const blocked = needsRun ? !r?.n : needsValid ? issues.length > 0 : false
+        const reason = needsRun ? 'Run the model first' : 'Fix validation issues first'
+        return <button key={id} className="bd-export-row" disabled={blocked || working} onClick={() => exportFile(id)}>
+          <span className="bd-export-icon"><item.icon size={17}/></span>
+          <span className="bd-export-text"><strong>{label}</strong><small>{blocked ? reason : hint}</small></span>
+          <code>{ext}</code>
+          <Download size={15} className="bd-export-dl" aria-hidden="true"/>
         </button>
-      })}
-    </div>
-    {r?.n ? <p className="bd-hint">Recorded run · seed {run.model.seed} · {r.n} replications{r.status!=='complete'?' (partial)':''}.</p> : <p className="bd-hint">Run the model to unlock CSV, chart and ZIP exports.</p>}
+      })}</div>
+    </section>)}
     {!!issues.length && <Issues issues={issues}/>}
-  </>
+  </div>
 }
-export function Dialog({title, close, children}) {
+const kindIcons = {input:Activity, constant:Equal, formula:FunctionSquare, output:FunctionSquare, event:Binary, metric:ChartNoAxesColumnIncreasing, question:Settings2}
+export function Dialog({title, kind, close, children}) {
+  const Icon = kindIcons[kind]
   const dialog = useRef(null)
   useEffect(() => { const d = dialog.current; d.showModal(); return () => d.close() }, [])
   return <dialog ref={dialog} className="bd-dialog" aria-label={title} onCancel={e => {e.preventDefault();close()}}>
-    <header className="bd-panel-head"><h2>{title}</h2><button onClick={close} aria-label="Close dialog"><X size={16}/></button></header>
+    <header className={'bd-panel-head bd-dialog-head' + (kind ? ' bd-kind-' + kind : '')}>
+      <div>{kind && <small className="bd-dialog-kind"><Icon size={13}/> {kindNames[kind]}</small>}<h2>{title}</h2></div>
+      <button className="bd-dialog-close" onClick={close} aria-label="Close dialog"><X size={16}/></button></header>
     <div className="bd-pad">{children}</div></dialog>
+}
+export function NodeDialog({draft, selected, change, select, close}) {
+  return <Dialog title={nodeTitle(draft, selected)} kind={nodeKind(draft, selected)} close={close}>
+    <NodeEditor draft={draft} selected={selected} change={change} select={select} close={close}/></Dialog>
 }
 export function Wizard({close, finish}) {
   const [draft,setDraft] = useState(() => createProject(true))

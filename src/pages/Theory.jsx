@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Latex } from '../components/ui/Latex'
 
-function BellCurve({highlight}) {
+function BellCurve() {
   const pts = Array.from({length:200},(_,i)=>{
     const x=i/199
     const z=(x-0.5)*8
@@ -9,20 +9,16 @@ function BellCurve({highlight}) {
     return [20+x*560, 148-y*340]
   })
   const path='M '+pts.map(p=>p.join(' ')).join(' L ')
-  const fillLeft=pts.filter(p=>p[0]<=(20+560*(highlight?.lo??0.5-4/8))).map(p=>p.join(',')).join(' ')
-  const fillRight=pts.filter(p=>p[0]>=(20+560*(1-(highlight?.lo??0.5-4/8)))).map(p=>p.join(',')).join(' ')
   const baseline=148
-  return <svg viewBox="0 0 600 180" role="img" aria-label="Normal distribution bell curve" className="theory-svg">
+  return <svg viewBox="0 0 600 204" role="img" aria-label="Normal distribution bell curve" className="theory-svg">
+    <g transform="translate(0 24)">
     <line x1="20" y1={baseline} x2="580" y2={baseline} stroke="var(--chart-axis)" strokeWidth="1.5"/>
     {[-3,-2,-1,0,1,2,3].map(z=>{
       const x=20+560*(0.5+z/8)
       return <g key={z}><line x1={x} y1={baseline} x2={x} y2={baseline+5} stroke="var(--chart-axis)" strokeWidth="1"/><text x={x} y={baseline+18} textAnchor="middle" fontSize="10" fill="var(--text-subtle)">{z===0?'μ':z+'σ'}</text></g>
     })}
-    {highlight&&<>
-      <path d={'M 20 155 L '+fillLeft+' L '+(20+560*(highlight.lo??0))+' 155 Z'} fill="var(--chart-1)" fillOpacity=".25"/>
-      <path d={'M '+(20+560*(1-highlight.lo??1))+' 155 L '+fillRight+' L 580 155 Z'} fill="var(--chart-1)" fillOpacity=".25"/>
-    </>}
     <path d={path} fill="none" stroke="var(--chart-1)" strokeWidth="2.5" strokeLinejoin="round"/>
+    </g>
     <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">Normal distribution N(μ, σ²)</text>
   </svg>
 }
@@ -37,7 +33,8 @@ function LLNChart() {
     return [25+i/199*550, 90-mean*55]
   })
   const pathD='M '+pts.map(p=>p.join(' ')).join(' L ')
-  return <svg viewBox="0 0 600 180" role="img" aria-label="Law of large numbers: running mean converges to true mean" className="theory-svg">
+  return <svg viewBox="0 0 600 204" role="img" aria-label="Law of large numbers: running mean converges to true mean" className="theory-svg">
+    <g transform="translate(0 24)">
     <line x1="25" y1="90" x2="575" y2="90" stroke="var(--chart-2)" strokeWidth="1.5" strokeDasharray="6 3"/>
     <line x1="25" y1="40" x2="25" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     <line x1="25" y1="145" x2="575" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
@@ -47,13 +44,15 @@ function LLNChart() {
     <text x="12" y="140" textAnchor="middle" fontSize="10" fill="var(--text-subtle)">−1</text>
     <path d={pathD} fill="none" stroke="var(--chart-1)" strokeWidth="2" strokeLinejoin="round"/>
     <text x="400" y="78" fontSize="10" fill="var(--chart-2)" fontStyle="italic">true mean = 0</text>
+    </g>
     <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">Running mean converges as n → ∞</text>
   </svg>
 }
 
 function CIChart() {
   const pts=[50,100,200,500,1000,2000,5000,10000]
-  return <svg viewBox="0 0 600 180" role="img" aria-label="Confidence interval width narrows with more samples" className="theory-svg">
+  return <svg viewBox="0 0 600 204" role="img" aria-label="Confidence interval width narrows with more samples" className="theory-svg">
+    <g transform="translate(0 24)">
     <line x1="60" y1="20" x2="60" y2="150" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     <line x1="60" y1="150" x2="580" y2="150" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     {pts.map((n,i)=>{
@@ -68,8 +67,9 @@ function CIChart() {
       </g>
     })}
     <line x1="60" y1="85" x2="580" y2="85" stroke="var(--chart-2)" strokeWidth="1" strokeDasharray="5 3"/>
-    <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">95% CI width shrinks as 1/√n</text>
     <text x="12" y="89" textAnchor="middle" fontSize="10" fill="var(--chart-2)">p</text>
+    </g>
+    <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">95% CI width shrinks as 1/√n</text>
   </svg>
 }
 
@@ -79,7 +79,8 @@ function IntegrationViz() {
   const pathD='M '+pts.map(p=>p.join(' ')).join(' L ')
   const fillD='M 60 140 L '+pts.map(p=>p.join(',')).join(' ')+' L 540 140 Z'
   const darts=[[0.1,0.75],[0.17,0.3],[0.33,0.6],[0.45,0.85],[0.52,0.2],[0.61,0.65],[0.72,0.9],[0.8,0.4],[0.88,0.55],[0.14,0.9],[0.37,0.1],[0.65,0.3],[0.78,0.75],[0.25,0.45],[0.55,0.95]]
-  return <svg viewBox="0 0 600 180" role="img" aria-label="Monte Carlo integration: random darts estimate area under a curve" className="theory-svg">
+  return <svg viewBox="0 0 600 204" role="img" aria-label="Monte Carlo integration: random darts estimate area under a curve" className="theory-svg">
+    <g transform="translate(0 24)">
     <line x1="60" y1="25" x2="60" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     <line x1="60" y1="145" x2="545" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     <path d={fillD} fill="var(--chart-3)" fillOpacity=".18"/>
@@ -91,6 +92,7 @@ function IntegrationViz() {
       const hit=sy>=fy
       return <circle key={i} cx={sx} cy={sy} r="4" fill={hit?'var(--chart-1)':'var(--chart-2)'} fillOpacity=".85"/>
     })}
+    </g>
     <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">Random samples estimate ∫f(x)dx · blue = under curve, red = above</text>
   </svg>
 }
@@ -105,7 +107,8 @@ function ConvergenceRates() {
   }
   const pts=data.map(d=>[60+Math.log10(d.n/10)/4*480, logScale(d.err,0.001,1,140)])
   const pathD='M '+pts.map(p=>p.join(' ')).join(' L ')
-  return <svg viewBox="0 0 600 180" role="img" aria-label="Monte Carlo error converges proportional to 1 over root n" className="theory-svg">
+  return <svg viewBox="0 0 600 204" role="img" aria-label="Monte Carlo error converges proportional to 1 over root n" className="theory-svg">
+    <g transform="translate(0 24)">
     <line x1="60" y1="20" x2="60" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     <line x1="60" y1="145" x2="545" y2="145" stroke="var(--chart-axis)" strokeWidth="1.5"/>
     {data.map((d,i)=>{
@@ -118,6 +121,7 @@ function ConvergenceRates() {
     })}
     <path d={pathD} fill="none" stroke="var(--chart-1)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
     {pts.map((p,i)=><circle key={i} cx={p[0]} cy={p[1]} r="4" fill="var(--chart-1)"/>)}
+    </g>
     <text x="300" y="14" textAnchor="middle" fontSize="11" fill="var(--text-muted)" fontStyle="italic">Standard error ≈ σ/√n — log scale</text>
   </svg>
 }

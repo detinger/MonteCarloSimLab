@@ -149,6 +149,7 @@ export function createExperiment(model) {
           throw Error(error.message+' Check replication '+(n+1)+' and the input ranges.')
         }
         event = eventOccurs(output,config)
+        values.push(output)
       }
       n++
       hits += Number(event)
@@ -172,7 +173,7 @@ export function createExperiment(model) {
       bands:bands.map(({day,prices})=>{
         const ordered=[...prices].sort((a,b)=>a-b)
         return {day,quantiles:[.05,.25,.5,.75,.95].map(p=>quantile(ordered,p))}
-      })} : {}
+      })} : config.kind === 'builder' && n && n === config.samples ? describeOutputs(values) : {}
     return {...analysis,paths,n,hits,mean: n ? (config.kind === 'pi' ? 4*hits/n : mean) : null,sd,se,meanCI,probability:n ? hits/n : null,probabilityCI,points:[...points],trace:[...trace],convergence:[...convergence]}
   }
   return {advance,summary}

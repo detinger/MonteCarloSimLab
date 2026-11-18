@@ -20,7 +20,7 @@ export function inputLaw(input) {
   if((kind==='uniform'||kind==='triangular')&&!Number.isFinite((kind==='uniform'?input.b:input.c)-input.a))
     throw Error('The input range must be finite.')
   const law=lawFor(kind,params)
-  if(!Number.isFinite(law.mean)) throw Error('Distribution mean exceeds the supported numeric range.')
+  if(!law.undefinedMean && !Number.isFinite(law.mean)) throw Error('Distribution mean exceeds the supported numeric range.')
   return law
 }
 export function inputQuantile(input, probability) {

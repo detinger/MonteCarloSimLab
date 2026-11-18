@@ -4,8 +4,8 @@
 .research-columns {display:grid;grid-template-columns:minmax(220px,320px) minmax(0,1fr);gap:18px;align-items:start}
 .research-panel {padding:20px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);min-width:0}
 .research-panel label {display:grid;gap:4px;font-size:13px;font-weight:550;margin-bottom:12px}
-.research-panel :is(input,select,.research-input) {height:34px;min-width:0;width:100%;padding:5px 8px;font:inherit;color:var(--text);background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:6px}
-.research-panel button,.research-page>.research-actions button {font:inherit;cursor:pointer;color:var(--text);padding:6px 10px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:6px}
+.research-panel :is(input,select) {height:34px;min-width:0;width:100%;padding:5px 8px;font:inherit;color:var(--text);background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:6px}
+.research-panel button {font:inherit;cursor:pointer;color:var(--text);padding:6px 10px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:6px}
 .research-panel .primary-control {color:var(--text-on-primary);background:var(--primary);border-color:var(--primary)}
 .research-panel button:disabled {opacity:.55;cursor:default}
 .research-panel p {font-size:13px;color:var(--text-muted);margin:6px 0 12px}

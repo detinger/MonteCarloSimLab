@@ -4,7 +4,7 @@ import '@xyflow/react/dist/style.css'
 import { Activity, AlertTriangle, Binary, ChartNoAxesColumnIncreasing, Check, Equal, FunctionSquare, GitBranch, LayoutGrid, Table2, AlignHorizontalJustifyStart, AlignVerticalJustifyStart } from 'lucide-react'
 import {dependencies} from './relations.js'
 import { families } from './project'
-import { SetupTree } from './Editor.jsx'
+import { SetupTable } from './Editor.jsx'
 
 const W = 184
 
@@ -82,7 +82,7 @@ export default function ModelGraph({ project, selected, select, move, arrange, a
   }, [move])
 
   function groupAlign(axis) {
-    const picked = tableNodes.filter(v => group.includes(v.id))
+    const picked = layout(project).filter(v => group.includes(v.id))
     if (picked.length < 2) return
     const position = Math.min(...picked.map(v => v[axis]))
     arrange({ ...project.positions, ...Object.fromEntries(picked.map(v => [v.id, { x: v.x, y: v.y, [axis]: position }])) })
@@ -103,18 +103,23 @@ export default function ModelGraph({ project, selected, select, move, arrange, a
   return <section className="bd-panel bd-graph" onKeyDown={onKeyDown}>
     <header className="bd-panel-head"><h2><GitBranch size={17}/> Model structure</h2>
       <div className="bd-tools">
-        <button className="bd-add bd-add-input" onClick={add} disabled={project.inputs.length >= 32} title="Add a random variable — an uncertain input drawn from a distribution each replication"><Activity size={14}/> Add input</button>
-        <button className="bd-add bd-add-formula" disabled={project.relations?.length >= 24} onClick={addFormula} title="Add an intermediate formula that combines inputs into a named value"><FunctionSquare size={14}/> Add formula</button>
-        <button className="bd-add bd-add-tidy" onClick={tidy} disabled={table} title="Reset every node to the automatic left-to-right layout"><LayoutGrid size={14}/> Tidy layout</button>
-        <div className="bd-toolbar-sep"/>
-        {group.length >= 2 && !table && <>
-          <button type="button" onClick={() => groupAlign('x')} title="Align selected nodes to the left"><AlignHorizontalJustifyStart size={14}/> Align X</button>
-          <button type="button" onClick={() => groupAlign('y')} title="Align selected nodes to the top"><AlignVerticalJustifyStart size={14}/> Align Y</button>
+        {!table && <>
+          <button className="bd-add bd-add-input" onClick={add} disabled={project.inputs.length >= 32} title="Add a random variable — an uncertain input drawn from a distribution each replication"><Activity size={14}/> Add input</button>
+          <button className="bd-add bd-add-formula" disabled={project.relations?.length >= 24} onClick={addFormula} title="Add an intermediate formula that combines inputs into a named value"><FunctionSquare size={14}/> Add formula</button>
+          <button className="bd-add bd-add-tidy" onClick={tidy} title="Reset every node to the automatic left-to-right layout"><LayoutGrid size={14}/> Tidy layout</button>
+          {group.length >= 2 && <>
+            <button type="button" onClick={() => groupAlign('x')} title="Align selected nodes to the left"><AlignHorizontalJustifyStart size={14}/> Align X</button>
+            <button type="button" onClick={() => groupAlign('y')} title="Align selected nodes to the top"><AlignVerticalJustifyStart size={14}/> Align Y</button>
+          </>}
+          <div className="bd-toolbar-sep"/>
         </>}
-        <button type="button" onClick={() => setTable(!table)}>{table ? <GitBranch size={14}/> : <Table2 size={14}/>} {table ? 'Diagram' : 'Setup'}</button>
+        <div className="bd-segmented" role="group" aria-label="View">
+          <button type="button" aria-pressed={!table} onClick={() => setTable(false)}><GitBranch size={14}/> Diagram</button>
+          <button type="button" aria-pressed={table} onClick={() => setTable(true)}><Table2 size={14}/> Table</button>
+        </div>
       </div>
     </header>
-    {table ? <div className="bd-setup-wrap"><SetupTree draft={project} change={edit} select={select}/></div> : <div className="bd-rf" aria-label="Model diagram. Click a node to edit it. Shift-click to group nodes.">
+    {table ? <div className="bd-setup-wrap"><SetupTable draft={project} change={edit} selected={selected} select={select} add={add} addFormula={addFormula}/></div> : <div className="bd-rf" aria-label="Model diagram. Click a node to edit it. Shift-click to group nodes.">
       <div className="bd-canvas-hint">Click a node to edit · drag to move · shift-click to group · Backspace to delete</div>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}

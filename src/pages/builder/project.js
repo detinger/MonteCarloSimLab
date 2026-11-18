@@ -124,6 +124,9 @@ export function checkRun(run) {
       r.trace.some(t => !t || !bounded(t.index,r.n) || !Number.isFinite(t.output) || typeof t.event !== 'boolean' ||
         !t.inputs || model.inputs.some(i => !Number.isFinite(t.inputs[i.name]))) ||
       r.convergence.some(c => !c || !bounded(c.n,r.n) || !Number.isFinite(c.mean)) ||
+      (r.histogram !== undefined && (!Array.isArray(r.histogram) || r.histogram.length > 30 ||
+        r.histogram.some(b => !b || !Number.isFinite(b.low) || !Number.isFinite(b.high) || !bounded(b.count,r.n)))) ||
+      (r.quantiles !== undefined && (!Array.isArray(r.quantiles) || r.quantiles.some(q => !q || !Number.isFinite(q.p) || !Number.isFinite(q.value)))) ||
       (model.unit != null && typeof model.unit !== 'string')) throw new Error('The saved run has unsupported or malformed results.')
   return run
 }

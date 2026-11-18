@@ -45,7 +45,8 @@ test('bounded run records, chart and sample download retain provenance',()=>{
   const run={engineVersion:ENGINE_VERSION,model,result:{...job.summary(),status:'complete'}}
   const serialized=JSON.parse(JSON.stringify(run))
   assert.deepEqual(checkRun(serialized),serialized)
-  assert.equal(traceCsv(run).trim().split('\r\n').length,33)
+  // Up to 500 replications are captured, so a 100-run trace has 100 rows plus the header.
+  assert.equal(traceCsv(run).trim().split('\r\n').length,101)
   assert.match(convergenceSvg(run),/Completed replications/)
   assert.throws(()=>checkRun({...run,engineVersion:'unknown'}))
 })

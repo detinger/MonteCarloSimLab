@@ -1,7 +1,8 @@
-import { Cloud, Rocket, Users, ShieldAlert, Gauge, Bug, Headphones, Server, FileCheck, Laptop } from 'lucide-react'
+import { Cloud, Rocket, Users, ShieldAlert, Gauge, Bug, Headphones, Server, FileCheck, Laptop, Wallet, TrendingUp, Wrench } from 'lucide-react'
+import { saveProject, template } from './pages/builder/project'
 
-// Ready-to-run Monte Carlo models for the IT industry. Each entry is a full
-// Builder project (same shape as createProject) plus a themed challenge.
+// Ready-to-run Monte Carlo models. Each entry is a full Builder project
+// (same shape as createProject); most also carry a themed challenge.
 export const itModels = [
   { id:'cloud-cost', code:'IT01', name:'Cloud Cost Overrun', icon:Cloud, field:'Cloud · FinOps',
     description:'Estimate the chance next month’s cloud bill blows past the budget.',
@@ -124,6 +125,18 @@ export const itModels = [
       {name:'price', label:'Unit price (EUR)', distribution:'triangular', a:'900', b:'1200', c:'1800'},
       {name:'extras', label:'Accessories per unit (EUR)', distribution:'uniform', a:'50', b:'150'},
     ] },
+  ...[
+    { id:'budget', code:'GN01', name:'Project Budget', icon:Wallet, field:'Project finance',
+      description:'Chance a project with three uncertain cost components exceeds its budget.' },
+    { id:'revenue', code:'GN02', name:'Product Revenue', icon:TrendingUp, field:'Sales',
+      description:'How often net revenue clears a target after uncertain sales and returns.' },
+    { id:'rare', code:'GN03', name:'Rare Equipment Loss', icon:Wrench, field:'Risk',
+      description:'A rare failure with a heavy loss: how often does one mission cost more than €50,000?' },
+  ].map(m => {
+    // The Builder's starter templates, so both places share one definition.
+    const { title, question, unit, threshold, assumptions, expression, inputs } = template(m.id)
+    return { ...m, title, question, unit, threshold, assumptions, expression, inputs }
+  }),
 ]
 
 // Materialise a model into a fresh Builder project (new id each time).
@@ -136,4 +149,17 @@ export function buildModel(m) {
     inputs: m.inputs.map(i => ({ unit: m.unit, ...i })),
     relations: [], positions: {},
   }
+}
+
+// Save a model as a new Builder project and switch to the Builder.
+export async function openModel(m) {
+  const draft = buildModel(m)
+  const record = { id: draft.id, project: draft, run: null, updatedAt: new Date().toISOString() }
+  try {
+    await saveProject(record, null)
+    window.dispatchEvent(new Event('mc-project-change'))
+    sessionStorage.setItem('mc-builder-open', draft.id)
+  } catch { /* storage unavailable — the Builder opens a blank model instead */ }
+  window.dispatchEvent(new CustomEvent('mc-builder-open', { detail: draft.id }))
+  window.location.assign('#/builder')
 }

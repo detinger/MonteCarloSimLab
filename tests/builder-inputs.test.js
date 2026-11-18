@@ -17,7 +17,12 @@ for (const [kind,[,labels,defaults]] of Object.entries(distributions)) {
     const run=createExperiment(model)
     run.advance(model.samples)
     const result=run.summary()
-    assert.ok(Math.abs(result.mean-lawFor(kind,defaults).mean)<6*result.se+1e-12)
+    const law=lawFor(kind,defaults)
+    if(law.undefinedMean) {
+      // No mean exists (Cauchy): compare the run's median with the theoretical median.
+      const median=result.quantiles.find(q=>q.p===.5).value
+      assert.ok(Math.abs(median-law.inv(.5))<6/(2*law.pdf(law.inv(.5))*Math.sqrt(model.samples)))
+    } else assert.ok(Math.abs(result.mean-law.mean)<6*result.se+1e-12)
     const single=compileEngine(model)
     for(const row of result.trace) assert.equal(sample(single.inputs[0],row.index-1,model.seed),row.output)
   })
@@ -27,6 +32,8 @@ test('Extended distributions reject invalid parameters at the worker boundary',(
     ['empirical',[[]]], ['empirical',[[1,Infinity]]], ['empirical',['1,2']],['categorical',[[0,0.4]]],
     ['truncated',[0,1,4,-1]], ['truncated',[0,1,12,13]], ['weibull',[0,3]],['discrete',[2.5,9]],
     ['gamma',[1,-2]],['poisson',[-1]],['binomial',[3.1,0.3]],['beta',[2,0]],
+    ['geometric',[0]],['geometric',[1.2]],['negbinomial',[1.5,0.5]],['negbinomial',[3,0]],['hypergeometric',[10,11,3]],
+    ['hypergeometric',[10,4,12]],['hypergeometric',[9.5,4,2]],['logistic',[0,0]],['cauchy',[0,-1]],['minextreme',[1,0]],
   ]){
     assert.throws(()=>inputLaw({distribution,...Object.fromEntries(values.map((v,i)=>[slotKeys[i],v]))}))
   }

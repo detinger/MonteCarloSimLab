@@ -4,8 +4,14 @@ import DistributionChart from '../components/analysis/DistributionChart'
 import {download} from './builder/project'
 import '../styles/analysis.css'
 
+// A link such as #/distributions/gamma opens the Studio on that family.
+function linkedKind() {
+  const kind=location.hash.split('/')[2]
+  return Object.hasOwn(distributions,kind ?? '') ? kind : 'normal'
+}
+
 export default function DistributionStudio() {
-  const [kind,setKind]=useState('normal'), [fields,setFields]=useState(['0','1'])
+  const [kind,setKind]=useState(linkedKind), [fields,setFields]=useState(()=>distributions[linkedKind()][2].map(String))
   const [seed,setSeed]=useState('42'), [n,setN]=useState('2000')
   const [result,setResult]=useState(null), [busy,setBusy]=useState(false), [error,setError]=useState('')
   const [query,setQuery]=useState('0'),[percentile,setPercentile]=useState('0.5')
@@ -48,8 +54,8 @@ export default function DistributionStudio() {
       <button disabled={!!invalid} onClick={apply}>Add input to Builder</button></div>
     {transferMessage&&<p role="status">{transferMessage}</p>}{error&&<p role="alert">{error}</p>}</section>
     <section className="research-panel"><h2>Sample distribution</h2>{result?<><p className="chart-note">{stale?'From earlier parameters · ':''}{distributions[result.kind][0]} · {result.n.toLocaleString()} draws · seed {result.seed}</p>
-      <div className="stat-strip">{[['Sample mean',result.mean],['Theoretical mean',result.reference],['Sample median',result.median]].map(([key,v])=><div key={key}><small>{key}</small><strong>{Number(v.toPrecision(5))}</strong></div>)}</div>
-      <DistributionChart rows={result.rows} n={result.n} unit="Sample value"/>
+      <div className="stat-strip">{[['Sample mean',result.mean],['Theoretical mean',result.reference],['Sample median',result.median]].map(([key,v])=><div key={key}><small>{key}</small><strong>{Number.isFinite(v)?Number(v.toPrecision(5)):'Undefined'}</strong></div>)}</div>
+      <DistributionChart rows={result.rows} n={result.n} unit="Sample value" law={selected}/>
       <details><summary>Inspect theoretical probabilities</summary><label>Value x<input value={query} onChange={e=>setQuery(e.target.value)}/></label>
         {query.trim()&&Number.isFinite(+query)&&<p>{selected.discrete?'Probability mass at x':'Density at x'} · {format(selected.pdf(+query))}<br/>Cumulative probability P(X ≤ x) · {format(selected.cdf(+query))}</p>}
         <label>Quantile probability (0 &lt; p &lt; 1)<input value={percentile} onChange={e=>setPercentile(e.target.value)}/></label>
