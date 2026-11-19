@@ -200,6 +200,8 @@
 .bd-dialog fieldset { display:grid; gap:12px; border:1px solid var(--border); padding:12px; min-width:0; border-radius:6px; }
 .bd-dialog legend { padding:0 5px; font-size:12px; }
 .bd-project-list { display:grid; gap:6px; }
+.bd-template-list { display:grid; gap:12px; }
+.bd-template-list h4 { margin:0 0 6px; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-muted); }
 .bd-project-list button { justify-content:flex-start; text-align:left; flex-wrap:wrap; }
 .bd-project-list small { flex:1 0 100%; color:var(--text-muted); }
 @media(max-width:550px) {

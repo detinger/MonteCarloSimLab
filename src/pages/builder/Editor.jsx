@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Activity, Binary, ChartLine, ChartNoAxesColumnIncreasing, ChevronDown, ChevronUp, Copy, Download, Equal, FileArchive, FileCode, FileJson, FileSpreadsheet, FunctionSquare, NotebookText, Plus, Settings2, Trash2, X } from 'lucide-react'
 import {slotKeys,isListLaw} from '../../engine/inputLaws.js'
 import {comparators} from '../../engine/index.js'
-import { createProject, families, issuesFor, newInput, template } from './project'
+import { createProject, families, issuesFor, newInput } from './project'
+import { itModels, buildModel } from '../../itModels.js'
 import Results from './Results.jsx'
 
 export function Field({ title, ...props }) {
@@ -301,7 +302,7 @@ export function Wizard({close, finish}) {
   return <Dialog title="New simulation" close={close}>
     <div className="bd-tabs">{labels.map((s,i) => <button key={s} onClick={() => setStep(i)} aria-pressed={i === step}>{i+1}. {s}</button>)}</div>
     {step === 0 && <><ModelQuestion draft={draft} change={update}/><p className="bd-hint">Define the inputs and calculation that will answer your question in the next steps.</p>
-      <div className="bd-tools"><button onClick={() => finish(draft)}>Open blank canvas</button></div><h3>Start from a template</h3><div className="bd-project-list">{[['budget','Project budget'],['revenue','Product revenue'],['rare','Rare equipment loss'],['stock','Stock price (GBM)']].map(([id,title])=><button key={id} onClick={()=>finish(template(id))}><strong>{title}</strong><small>{template(id).question}</small></button>)}</div></>}
+      <div className="bd-tools"><button onClick={() => finish(draft)}>Open blank canvas</button></div><h3>Start from a template</h3><div className="bd-template-list">{['Beginner','Intermediate','Advanced'].map(level=><section key={level}><h4>{level}</h4><div className="bd-project-list">{itModels.filter(m=>m.level===level).map(m=><button key={m.id} onClick={()=>finish(buildModel(m))}><strong>{m.code} · {m.name}</strong><small>{m.question}</small></button>)}</div></section>)}</div></>}
     {step === 1 && <><p>Specify independent inputs and their units. Choose Constant for a fixed value.</p>
       {draft.inputs.map((v,i) => <fieldset key={v.name}><legend>{v.name}</legend><InputFields input={v} change={p => update({inputs:draft.inputs.map((o,j) => i === j ? {...o,...p} : o)})}/></fieldset>)}
       <button disabled={draft.inputs.length >= 32} onClick={() => update({inputs:[...draft.inputs,newInput(draft.inputs,draft.unit)]})}><Plus size={14}/> Add input</button></>}
