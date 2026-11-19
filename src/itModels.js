@@ -1,10 +1,10 @@
-import { Cloud, Rocket, Users, ShieldAlert, Gauge, Bug, Headphones, Server, FileCheck, Laptop, Wallet, TrendingUp, Wrench } from 'lucide-react'
+import { Cloud, Rocket, Users, ShieldAlert, Gauge, Bug, Headphones, Server, FileCheck, Laptop, Wallet, TrendingUp, Wrench, ChartNoAxesCombined } from 'lucide-react'
 import { saveProject, template } from './pages/builder/project'
 
 // Pull title/question/unit/threshold/assumptions/expression/inputs from a Builder template.
 function fromTemplate(meta) {
-  const { title, question, unit, threshold, assumptions, expression, inputs } = template(meta.id)
-  return { ...meta, title, question, unit, threshold, assumptions, expression, inputs }
+  const { title, question, unit, threshold, comparator, assumptions, expression, inputs } = template(meta.id)
+  return { ...meta, title, question, unit, threshold, comparator, assumptions, expression, inputs }
 }
 
 // Ready-to-run Monte Carlo models ordered Beginner → Intermediate → Advanced.
@@ -136,6 +136,9 @@ export const itModels = [
 
   fromTemplate({ id:'revenue', code:'GN02', name:'Product Revenue & Profit', icon:TrendingUp, field:'Sales', level:'Intermediate',
     description:'How often does net profit (after variable and fixed costs) exceed the target?' }),
+
+  fromTemplate({ id:'stock', code:'GN04', name:'Stock Price (GBM)', icon:ChartNoAxesCombined, field:'Finance', level:'Intermediate',
+    description:'One-year geometric Brownian motion: how likely is the price to end above where it started?' }),
 
   // ─── Advanced ─────────────────────────────────────────────────────────────
   // IT04: enhanced from a 3-input model to a 6-input model with incident response and regulatory fine risk.
