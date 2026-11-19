@@ -3,6 +3,7 @@ import {usesLegacyTransform} from './inputLaws.js'
 import {pythonDomain, rDomain, rPlot} from './domainExport.js'
 import {isDomain, domainSpecs} from './domains.js'
 import {compile, ENGINE_VERSION} from './index.js'
+import {pythonBuilderCells, pythonBuilderData, rBuilderPlots} from './builderExport.js'
 
 const libraries = `import csv
 import json
@@ -74,6 +75,7 @@ def wilson(hits, n):
     return [0 if hits == 0 else center-radius, 1 if hits == n else center+radius]`
 
 const simulation = `outputs, scatter, events, convergence, paths = [], [], [], [], []
+input_samples = {node["name"]: [] for node in model.get("inputs", [])} if model["kind"] == "builder" else {}
 n = model["samples"]
 critical_counts = Counter()
 hits = 0
@@ -94,6 +96,8 @@ for i in range(n):
         if path: paths.append(path)
     else:
         values = {node["name"]: sample(node, i) for node in model["inputs"]}
+        for name, value in values.items():
+            input_samples[name].append(value)
         output = formula(model["ast"], values)
         if not math.isfinite(output):
             raise ValueError(f"Nonfinite output at replication {i+1}")
@@ -146,6 +150,8 @@ function modelFunctions(model) {
 }
 
 export function pythonScript(model) {
+  if (model.kind === 'builder' || compile(model).kind === 'builder')
+    return [libraries,parameterCell(model),modelFunctions(model),simulation,stats,...pythonBuilderCells.map(([title,,code])=>'# ---- '+title+' ----\n'+code),pythonBuilderData].join('\n\n')+'\n'
   const optionalPlots='# Add --plot to render the analysis figures.\nif "--plot" in sys.argv:\n'+plots.split('\n').map(line=>'    '+line).join('\n')
   return [libraries,parameterCell(model),modelFunctions(model),simulation,stats,optionalPlots].join('\n\n')+'\n'
 }
@@ -205,6 +211,7 @@ with open("run-manifest.json", "w", encoding="utf-8") as handle:
     json.dump({"model":model, "summary":summary}, handle, ensure_ascii=False, indent=2)`
 
 export function notebook(model) {
+  const builder = compile(model).kind === 'builder'
   const cell = (type, id, source) => ({cell_type:type,id,metadata:{},source,
     ...(type === 'code' ? {execution_count:null,outputs:[]} : {})})
   return {nbformat:4,nbformat_minor:5,
@@ -219,9 +226,9 @@ export function notebook(model) {
       cell('code','simulate',simulation),
       cell('code','statistics',stats),
       cell('markdown','intervals','Wilson intervals measure sampling uncertainty in the event probability. For pi, multiply both endpoints by four. Builder mean intervals use Student’s t, with a normality or large-sample approximation. Outcome percentiles describe the spread of replications under fixed assumptions.'),
-      cell('code','plots',plots),
-      cell('markdown','files','Running the next cell writes the replication table and model manifest to the notebook working directory.'),
-      cell('code','export',dataExport)]}
+      ...(builder ? pythonBuilderCells.flatMap(([title,text,code],i)=>[cell('markdown','figure-'+i+'-text','## '+title+'\n\n'+text),cell('code','figure-'+i,code)]) : [cell('code','plots',plots)]),
+      cell('markdown','files','Running the next cell writes the replication table'+(builder?' with every input':'')+' and model manifest to the notebook working directory.'),
+      cell('code','export',builder ? pythonBuilderData : dataExport)]}
 }
 
 const rRng = `# Unsigned 32-bit arithmetic in exact 16-bit components.
@@ -298,6 +305,6 @@ radius <- z*sqrt((prob*(1-prob)+z^2/(4*n))/n)/denominator
 probability_ci <- c(if (prob == 0) 0 else center-radius, if (prob == 1) 1 else center+radius)`,
     config.kind === 'pi' ? 'mean_ci <- 4*probability_ci' : config.kind === 'montyhall' ? 'mean_ci <- probability_ci' : 'mean_ci <- if (n > 1) mean(output) + c(-1,1)*qt(0.975,n-1)*sd(output)/sqrt(n) else c(NA,NA)',
     'print(list(n=n,hits=sum(event),mean=mean(output),sd=sd(output),probability=prob,probabilityCI=probability_ci,meanCI=mean_ci,quantiles=quantile(output,c(.05,.5,.95))))')
-  lines.push(rPlot(config.kind))
+  lines.push(config.kind === 'builder' ? rBuilderPlots(config, rExpression(config.ast)) : rPlot(config.kind))
   return lines.join('\n\n')+'\n'
 }

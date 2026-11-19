@@ -64,12 +64,13 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The browser tests serve the production build. Set `LAB_TEST_URL` to run them against an existing deployment. `LAB_CHROME_CHANNEL=chrome` selects an installed Chrome browser. The notebook checks require Node, Python with scipy, matplotlib, nbformat, nbclient and ipykernel, and Rscript. `builder-input-notebook.py` compares the browser, Python and R draws for every input family.
+The browser tests serve the production build. Set `LAB_TEST_URL` to run them against an existing deployment. `LAB_CHROME_CHANNEL=chrome` selects an installed Chrome browser. The notebook checks require Node, Python with scipy, matplotlib, nbformat, nbclient and ipykernel, and Rscript. `builder-input-notebook.py` compares the browser, Python and R draws for every input family. `example-exports.mjs` runs every Simulation Examples model through all seven Builder exports, compares the Python and R results with the browser and checks that each analysis figure is produced.
 
 ```sh
 python tests/engine-notebooks.py
 python tests/additional-notebooks.py
 python tests/builder-input-notebook.py
+PYTHON=python node tests/example-exports.mjs
 ```
 
 ## Hosting
