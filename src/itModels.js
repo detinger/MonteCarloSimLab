@@ -56,10 +56,10 @@ export const itModels = [
     assumptions:'Churn rate, ARPU, expansion rate and expansion uplift are independent. Customer base held constant at 1,200.',
     expression:'customers * churn * arpu - customers * expansion * arpu_uplift',
     inputs:[
-      {name:'customers',    label:'Active customers',              distribution:'constant', a:'1200'},
-      {name:'churn',        label:'Monthly churn rate',           distribution:'uniform',  a:'0.02', b:'0.06'},
+      {name:'customers',    unit:'', label:'Active customers',              distribution:'constant', a:'1200'},
+      {name:'churn',        unit:'', label:'Monthly churn rate',           distribution:'uniform',  a:'0.02', b:'0.06'},
       {name:'arpu',         label:'Revenue per churned customer (EUR)', distribution:'triangular', a:'40', b:'60', c:'90'},
-      {name:'expansion',    label:'Monthly expansion rate',       distribution:'uniform',  a:'0.005', b:'0.02'},
+      {name:'expansion',    unit:'', label:'Monthly expansion rate',       distribution:'uniform',  a:'0.005', b:'0.02'},
       {name:'arpu_uplift',  label:'Expansion MRR per customer (EUR)', distribution:'uniform', a:'15', b:'40'},
     ] },
 
@@ -71,9 +71,9 @@ export const itModels = [
     assumptions:'Incident count, resolution time and per-minute cost are independent.',
     expression:'incidents * mttr * cost_min',
     inputs:[
-      {name:'incidents', label:'Incidents this month',       distribution:'poisson',   a:'3'},
-      {name:'mttr',      label:'Mean time to resolve (min)', distribution:'triangular', a:'20', b:'45', c:'120'},
-      {name:'cost_min',  label:'Downtime cost per minute (EUR)', distribution:'constant', a:'300'},
+      {name:'incidents', unit:'', label:'Incidents this month',       distribution:'poisson',   a:'3'},
+      {name:'mttr',      unit:'min', label:'Mean time to resolve (min)', distribution:'triangular', a:'20', b:'45', c:'120'},
+      {name:'cost_min',  unit:'EUR/min', label:'Downtime cost per minute (EUR)', distribution:'constant', a:'300'},
     ] },
 
   // IT07: enhanced from 2-input (tickets * handle) to a 5-input model with escalations and admin.
@@ -85,9 +85,9 @@ export const itModels = [
     assumptions:'Ticket arrivals and escalations are independent Poisson processes. Handle and escalation times are independent of volume.',
     expression:'tickets * handle + escalations * escalation_time + admin',
     inputs:[
-      {name:'tickets',         label:'Daily tickets',           distribution:'poisson',   a:'80'},
+      {name:'tickets',         unit:'', label:'Daily tickets',           distribution:'poisson',   a:'80'},
       {name:'handle',          label:'Handle time (min)',        distribution:'triangular', a:'10', b:'18', c:'35'},
-      {name:'escalations',     label:'Escalations per day',     distribution:'poisson',   a:'8'},
+      {name:'escalations',     unit:'', label:'Escalations per day',     distribution:'poisson',   a:'8'},
       {name:'escalation_time', label:'Escalation time (min)',   distribution:'triangular', a:'30', b:'60', c:'120'},
       {name:'admin',           label:'Admin & meetings (min)',  distribution:'uniform',   a:'60', b:'120'},
     ] },
@@ -114,10 +114,10 @@ export const itModels = [
     assumptions:'Seats in use and over-contract fraction are independent. Audit occurs independently of overage fraction. Flat per-seat overage price.',
     expression:'seats * overage * price + audit * penalty',
     inputs:[
-      {name:'seats',   label:'Seats in use',             distribution:'triangular', a:'800', b:'1100', c:'1500'},
-      {name:'overage', label:'Fraction over contract',   distribution:'uniform',   a:'0',   b:'0.15'},
+      {name:'seats',   unit:'', label:'Seats in use',             distribution:'triangular', a:'800', b:'1100', c:'1500'},
+      {name:'overage', unit:'', label:'Fraction over contract',   distribution:'uniform',   a:'0',   b:'0.15'},
       {name:'price',   label:'Price per seat (EUR)',      distribution:'constant',  a:'45'},
-      {name:'audit',   label:'Audit occurs',             distribution:'bernoulli', a:'0.08'},
+      {name:'audit',   unit:'', label:'Audit occurs',             distribution:'bernoulli', a:'0.08'},
       {name:'penalty', label:'Audit penalty (EUR)',       distribution:'triangular', a:'5000', b:'20000', c:'50000'},
     ] },
 
@@ -129,7 +129,7 @@ export const itModels = [
     assumptions:'Unit count, unit price and accessory cost are independent across devices.',
     expression:'laptops * (price + extras)',
     inputs:[
-      {name:'laptops', label:'Laptops to refresh',       distribution:'discrete',  a:'80',  b:'140'},
+      {name:'laptops', unit:'', label:'Laptops to refresh',       distribution:'discrete',  a:'80',  b:'140'},
       {name:'price',   label:'Unit price (EUR)',          distribution:'triangular', a:'900', b:'1200', c:'1800'},
       {name:'extras',  label:'Accessories per unit (EUR)', distribution:'uniform', a:'50',  b:'150'},
     ] },
@@ -150,11 +150,11 @@ export const itModels = [
     assumptions:'At most one breach per period. Record count, remediation cost, incident response and regulatory fine are independent given a breach.',
     expression:'breach * (records * cost_rec + response + regulatory * fine)',
     inputs:[
-      {name:'breach',     label:'Breach occurs',                   distribution:'bernoulli', a:'0.15'},
-      {name:'records',    label:'Records exposed',                  distribution:'triangular', a:'5000', b:'20000', c:'80000'},
+      {name:'breach',     unit:'', label:'Breach occurs',                   distribution:'bernoulli', a:'0.15'},
+      {name:'records',    unit:'', label:'Records exposed',                  distribution:'triangular', a:'5000', b:'20000', c:'80000'},
       {name:'cost_rec',   label:'Remediation per record (EUR)',     distribution:'triangular', a:'80',   b:'140',   c:'220'},
       {name:'response',   label:'Incident response cost (EUR)',     distribution:'uniform',   a:'50000', b:'200000'},
-      {name:'regulatory', label:'Regulatory action',               distribution:'bernoulli', a:'0.4'},
+      {name:'regulatory', unit:'', label:'Regulatory action',               distribution:'bernoulli', a:'0.4'},
       {name:'fine',       label:'Regulatory fine (EUR)',           distribution:'triangular', a:'100000', b:'300000', c:'1000000'},
     ] },
 
