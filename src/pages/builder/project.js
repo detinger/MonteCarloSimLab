@@ -23,12 +23,21 @@ export function createProject(blank = false) {
 export function template(id) {
   const draft=createProject()
   if(id==='budget') return draft
-  if(id==='revenue') return {...draft,title:'Product revenue',question:'How often will net revenue exceed €90,000?',
+  if(id==='revenue') return {...draft,title:'Product Revenue & Profit',question:'How often will net profit exceed €20,000 after variable and fixed costs?',
     inputs:[{name:'volume',label:'Unit sales',unit:'',distribution:'uniform',a:'800',b:'1400'},
       {name:'price',label:'Revenue per unit',unit:'EUR',distribution:'triangular',a:'75',b:'90',c:'100'},
-      {name:'returns',label:'Returned fraction',unit:'',distribution:'uniform',a:'0.01',b:'0.08'}],
-    expression:'volume * price * (1 - returns)',threshold:'90000',
-    assumptions:'Sales volume is approximated as continuous. Price, sales and return fraction are independent illustrative assumptions.'}
+      {name:'returns',label:'Returned fraction',unit:'',distribution:'uniform',a:'0.01',b:'0.08'},
+      {name:'variable_cost',label:'Variable cost per unit',unit:'EUR',distribution:'uniform',a:'25',b:'40'},
+      {name:'fixed_cost',label:'Fixed costs',unit:'EUR',distribution:'constant',a:'25000'}],
+    expression:'volume * price * (1 - returns) - variable_cost * volume - fixed_cost',threshold:'20000',
+    assumptions:'Sales volume is approximated as continuous. Price, unit cost, return fraction and fixed costs are independent illustrative assumptions.'}
+  if(id==='stock') return {...draft,title:'Stock price (GBM)',question:'What is the probability the terminal price exceeds the initial price?',
+    inputs:[{name:'s0',label:'Initial price',unit:'USD',distribution:'constant',a:'100'},
+      {name:'drift',label:'Annual drift',unit:'',distribution:'constant',a:'0.05'},
+      {name:'vol',label:'Annual volatility',unit:'',distribution:'constant',a:'0.2'},
+      {name:'z',label:'GBM shock',unit:'',distribution:'normal',a:'0',b:'1'}],
+    expression:'s0 * exp(drift - vol ^ 2 / 2 + vol * z)',threshold:'100',comparator:'>',unit:'USD',
+    assumptions:'One-year geometric Brownian motion. Drift and volatility are annualized. Z is a fresh standard normal shock per replication.'}
   return {...draft,title:'Rare equipment loss',question:'How often will a single equipment loss exceed €50,000?',
     inputs:[{name:'failure',label:'Equipment fails',unit:'',distribution:'bernoulli',a:'0.002'},
       {name:'loss',label:'Loss if failed',unit:'EUR',distribution:'triangular',a:'10000',b:'60000',c:'150000'}],
