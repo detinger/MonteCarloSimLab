@@ -5,6 +5,20 @@ import {isDomain, domainSpecs} from './domains.js'
 import {compile, ENGINE_VERSION} from './index.js'
 import {pythonBuilderCells, pythonBuilderData, rBuilderPlots} from './builderExport.js'
 
+// The notebook installs missing packages into its own kernel; scripts stop with the install command.
+const requiredPackages = `import importlib.util
+import subprocess
+import sys
+missing = [name for name in ("scipy", "matplotlib") if importlib.util.find_spec(name) is None]
+if missing:
+    print("Installing", ", ".join(missing), "into this kernel …")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", *missing])`
+
+const requireScriptPackages = `import importlib.util
+_missing = [name for name in ("scipy", "matplotlib") if importlib.util.find_spec(name) is None]
+if _missing:
+    sys.exit("This script needs " + " and ".join(_missing) + ". Install with:\\n    " + sys.executable + " -m pip install " + " ".join(_missing))`
+
 const libraries = `import csv
 import json
 import math
@@ -151,7 +165,7 @@ function modelFunctions(model) {
 
 export function pythonScript(model) {
   if (model.kind === 'builder' || compile(model).kind === 'builder')
-    return [libraries,parameterCell(model),modelFunctions(model),simulation,stats,...pythonBuilderCells.map(([title,,code])=>'# ---- '+title+' ----\n'+code),pythonBuilderData].join('\n\n')+'\n'
+    return [libraries,requireScriptPackages,parameterCell(model),modelFunctions(model),simulation,stats,...pythonBuilderCells.map(([title,,code])=>'# ---- '+title+' ----\n'+code),pythonBuilderData].join('\n\n')+'\n'
   const optionalPlots='# Add --plot to render the analysis figures.\nif "--plot" in sys.argv:\n'+plots.split('\n').map(line=>'    '+line).join('\n')
   return [libraries,parameterCell(model),modelFunctions(model),simulation,stats,optionalPlots].join('\n\n')+'\n'
 }
@@ -218,7 +232,8 @@ export function notebook(model) {
     metadata:{kernelspec:{name:'python3',language:'python',display_name:'Python 3'},language_info:{name:'python'}},
     cells:[
       cell('markdown','intro','# Monte Carlo experiment\n\nExported '+new Date().toISOString()+'. The parameter cell displays the saved question and assumptions. Results describe the specified model.'),
-      cell('markdown','requirements','Run in Python 3 with Matplotlib for charts and SciPy for t intervals and inverse distribution functions. Open a local file in Colab using File → Upload notebook.'),
+      cell('markdown','requirements','Run in Python 3 with Matplotlib for charts and SciPy for t intervals and inverse distribution functions. The first code cell installs either package if this kernel lacks it. Open a local file in Colab using File → Upload notebook.'),
+      cell('code','packages',requiredPackages),
       cell('code','libraries',libraries),
       cell('code','parameters',parameterCell(model)),
       cell('markdown','method','Each replication has its own counter. Each named input uses a separate stream. Repeated references to an input use the same draw within a replication. The integer generator matches the browser. Floating-point functions may differ in their last digits.'),
