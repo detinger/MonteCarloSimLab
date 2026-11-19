@@ -44,7 +44,7 @@ export const families = {
 }
 
 export const leaves = {
-  categorical:{x:0,y:960,title:'Estimate a probability distribution',kinds:['categorical']},
+  categorical:{x:0,y:960,title:'Categorical (custom probabilities)',kinds:['categorical']},
   binomial:{x:210,y:960,title:'Binomial',kinds:['binomial']},
   discrete:{x:420,y:960,title:'Uniform discrete',kinds:['discrete']},
   geometric:{x:630,y:960,title:'Geometric',kinds:['geometric']},
