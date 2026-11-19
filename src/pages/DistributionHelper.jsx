@@ -64,14 +64,10 @@ function Details({selected, choose, focus}) {
   const path = <div className="dh-zone dh-zone-path"><h3>Your path</h3>
     {steps.length ? <ol className="dh-path">{steps.map(s => <li key={s.to}><button onClick={() => choose(s.from)}>{questions[s.from].text}</button><span><ChevronRight size={12}/>{s.answer}</span></li>)}</ol>
       : <p>{selected ? 'This is the first question.' : 'Your answers will appear here.'}</p>}</div>
-  if (!selected) return <div className="dh-panel-body">
-    <div className="dh-zone"><small className="dh-kicker">How to use</small><h2>Find a distribution for your data</h2>
-      <p>Start at the top question and follow the answers that describe your data. Each path ends at a distribution family that fits it.</p></div>
-    <div className="dh-zone dh-zone-main">
-      <ul className="dh-tips"><li>Click any box on the canvas to see what it means.</li><li>Drag to pan, scroll or pinch to zoom.</li><li>Open a result in the Distribution Studio, or add it straight to your Builder model.</li></ul>
-      <button className="dh-primary" onClick={() => { choose('root'); focus('root') }}>Start at the first question <ArrowRight size={14}/></button>
-    </div>
-    {path}
+  if (!selected) return <div className="dh-ribbon">
+    <h1>Distribution Helper</h1>
+    <p>Answer the questions from the top to find a distribution that fits your data. Click a box for details · drag to pan, scroll to zoom · send a result to the Studio or your Builder model.</p>
+    <button className="dh-primary" onClick={() => { choose('root'); focus('root') }}>Start <ArrowRight size={14}/></button>
   </div>
   const question = questions[selected]
   if (question) return <div className="dh-panel-body">
@@ -130,7 +126,7 @@ function Canvas() {
     if (n) requestAnimationFrame(() => flow.setCenter(n.x, n.y + 60, {zoom:zoomIn ? Math.max(flow.getZoom(), .9) : flow.getZoom(), duration:400}))
   }
   return <div className="dh-layout">
-    <section className="dh-panel" aria-live="polite"><Details selected={selected} choose={setSelected} focus={focus}/></section>
+    <section className="dh-panel" aria-live="polite">{selected && <h1 className="sr-only">Distribution Helper</h1>}<Details selected={selected} choose={setSelected} focus={focus}/></section>
     <div className="dh-canvas">
       <ReactFlow nodes={nodes} edges={flowEdges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
         onNodeClick={(_, node) => { setSelected(node.id); focus(node.id, false) }} onPaneClick={() => setSelected(null)}
@@ -146,7 +142,6 @@ function Canvas() {
 
 export default function DistributionHelper() {
   return <article className="dh">
-    <header className="dh-head"><div><h1>Distribution Helper</h1><p>Answer a few questions about your data to find a distribution that fits it.</p></div></header>
     <ReactFlowProvider><Canvas/></ReactFlowProvider>
   </article>
 }
